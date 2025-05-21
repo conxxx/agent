@@ -41,7 +41,12 @@ from .tools.tools import (
     generate_qr_code,
     search_products, # Added import for the new tool
     set_website_theme, # Added import for the new theme tool
-    initiate_checkout_ui, # Added import for checkout tool
+    # initiate_checkout_ui, # Deprecated
+    display_checkout_item_selection_ui,
+    display_shipping_options_ui,
+    display_pickup_locations_ui,
+    display_payment_methods_ui,
+    display_order_confirmation_ui,
 )
 
 warnings.filterwarnings("ignore", category=UserWarning, module=".*pydantic.*")
@@ -142,7 +147,12 @@ root_agent = Agent(
         search_products,
         format_product_recommendations_for_display, # Added new tool
         set_website_theme, # Added new theme tool
-        initiate_checkout_ui, # Added checkout tool
+        # initiate_checkout_ui, # Deprecated
+        display_checkout_item_selection_ui,
+        display_shipping_options_ui,
+        display_pickup_locations_ui,
+        display_payment_methods_ui,
+        display_order_confirmation_ui,
     ],
     before_tool_callback=before_tool,
     after_tool_callback=after_tool,

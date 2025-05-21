@@ -360,15 +360,27 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
                addProductRecommendationsToChat(parsedData.payload);
                currentAgentMessageElement = null; return;
             }
-            if (parsedData.type === "command" && parsedData.command_name === "trigger_checkout_modal") {
-                console.log(`[WSInternal] Received 'trigger_checkout_modal'. Relaying to parent.`);
-                window.parent.postMessage({ type: 'initiate_checkout' }, '*');
-                currentAgentMessageElement = null;
-                console.log("[WSInternal] Posted 'initiate_checkout' message to parent window.");
+            // Removed old trigger_checkout_modal handler
+            // else if (parsedData.type === "command" && parsedData.command_name === "trigger_checkout_modal") {
+            //     console.log(`[WSInternal] Received 'trigger_checkout_modal'. Relaying to parent.`);
+            //     window.parent.postMessage({ type: 'initiate_checkout' }, '*');
+            //     currentAgentMessageElement = null;
+            //     console.log("[WSInternal] Posted 'initiate_checkout' message to parent window.");
+            //     return;
+            // }
+            else if (parsedData.action === "display_ui" && parsedData.ui_element) {
+                console.log(`[WSInternal] Received 'display_ui' action for element: ${parsedData.ui_element}. Relaying to parent. Payload:`, parsedData.payload);
+                window.parent.postMessage({
+                    type: "display_ui_component", // New type for main script
+                    ui_element: parsedData.ui_element,
+                    payload: parsedData.payload
+                }, 'http://localhost:5000'); // Ensure correct origin
+                currentAgentMessageElement = null; 
                 return;
             } else if (parsedData.type === "ui_command" && parsedData.command_name) {
-                // Handle generic UI commands from the agent, relayed from streaming_server.py
-                console.log(`[WSInternal] Received 'ui_command': ${parsedData.command_name}. Relaying to parent with payload:`, parsedData.payload);
+                // Handle other generic UI commands from the agent, relayed from streaming_server.py
+                // This block might become redundant if all UI updates switch to the "display_ui" action format
+                console.log(`[WSInternal] Received legacy 'ui_command': ${parsedData.command_name}. Relaying to parent with payload:`, parsedData.payload);
                 // Post the entire parsedData object as it contains type, command_name, and payload
                 window.parent.postMessage(parsedData, 'http://localhost:5000');
                 currentAgentMessageElement = null; // Assuming UI commands don't have direct text for chat display in widget
