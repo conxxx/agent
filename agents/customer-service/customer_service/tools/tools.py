@@ -546,18 +546,104 @@ def set_website_theme(theme: str) -> dict:
     logger.info(f"Tool 'set_website_theme' called with theme: '{theme}'. Returning: {action_result}")
     return action_result
 
-def initiate_checkout_ui() -> dict:
+
+# Deprecated: Replaced by granular UI tools like display_checkout_item_selection_ui, etc.
+# def initiate_checkout_ui() -> dict:
+#     """
+#     Instructs the agent to send a command to the frontend to open the checkout modal.
+#
+#     Returns:
+#         dict: A dictionary with the action to trigger the checkout modal.
+#               Example: {'action': 'trigger_checkout_modal'}
+#     """
+#     logger.info("Initiating checkout UI: instructing frontend to open checkout modal.")
+#
+#     # Log the action being returned
+#     action_payload = {"action": "trigger_checkout_modal"}
+#     logger.info(f"Returning action payload for initiate_checkout_ui: {action_payload}")
+#
+#     return action_payload
+
+
+def display_checkout_item_selection_ui(cart_items: list) -> dict:
     """
-    Instructs the agent to send a command to the frontend to open the checkout modal.
+    Displays the item selection UI for checkout.
+
+    Args:
+        cart_items (list): A list of cart items (dictionaries).
 
     Returns:
-        dict: A dictionary with the action to trigger the checkout modal.
-              Example: {'action': 'trigger_checkout_modal'}
+        dict: A dictionary to display the item selection UI.
     """
-    logger.info("Initiating checkout UI: instructing frontend to open checkout modal.")
-    
-    # Log the action being returned
-    action_payload = {"action": "trigger_checkout_modal"}
-    logger.info(f"Returning action payload for initiate_checkout_ui: {action_payload}")
-    
-    return action_payload
+    logger.info(f"Displaying checkout item selection UI with items: {cart_items}")
+    return {
+        "action": "display_ui",
+        "ui_element": "checkout_item_selection",
+        "payload": {"items": cart_items},
+    }
+
+
+def display_shipping_options_ui() -> dict:
+    """
+    Displays the shipping options UI for checkout.
+
+    Returns:
+        dict: A dictionary to display the shipping options UI.
+    """
+    logger.info("Displaying shipping options UI")
+    return {
+        "action": "display_ui",
+        "ui_element": "shipping_options",
+        "payload": {},
+    }
+
+
+def display_pickup_locations_ui(static_locations: list) -> dict:
+    """
+    Displays the pickup locations UI for checkout.
+
+    Args:
+        static_locations (list): A list of static pickup location strings.
+
+    Returns:
+        dict: A dictionary to display the pickup locations UI.
+    """
+    logger.info(f"Displaying pickup locations UI with locations: {static_locations}")
+    return {
+        "action": "display_ui",
+        "ui_element": "pickup_locations",
+        "payload": {"locations": static_locations},
+    }
+
+
+def display_payment_methods_ui() -> dict:
+    """
+    Displays the payment methods UI for checkout.
+
+    Returns:
+        dict: A dictionary to display the payment methods UI.
+    """
+    logger.info("Displaying payment methods UI")
+    return {
+        "action": "display_ui",
+        "ui_element": "payment_methods",
+        "payload": {"methods": ["Credit Card", "PayPal", "Google Pay"]},
+    }
+
+
+def display_order_confirmation_ui(order_details: dict) -> dict:
+    """
+    Displays the order confirmation UI.
+
+    Args:
+        order_details (dict): A dictionary of order details.
+
+    Returns:
+        dict: A dictionary to display the order confirmation UI.
+    """
+    logger.info(f"Displaying order confirmation UI with details: {order_details}")
+    return {
+        "action": "display_ui",
+        "ui_element": "order_confirmation",
+        "payload": {"details": order_details},
+    }

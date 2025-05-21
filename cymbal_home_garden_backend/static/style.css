@@ -825,78 +825,86 @@ body.night-mode .product-info-column .price {
     text-align: center;
 }
 
-/* Phase 1 Checkout Modal Styles */
-.checkout-modal { /* Replaces .modal for Phase 1 to avoid conflict if old one is still used */
-    display: none; 
+/* Phase 1 Checkout Modal Styles - Transformed to Sidebar */
+.checkout-modal {
+    display: none; /* Initially hidden */
     position: fixed;
-    z-index: 1050; /* Higher than other modals if any */
-    left: 0;
+    z-index: 9990; /* Below agent widget, above most other things */
+    right: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.7); /* Darker overlay */
-    align-items: center; /* For centering content */
-    justify-content: center; /* For centering content */
+    width: 40%; /* Sidebar width */
+    max-width: 480px; /* Max width for the sidebar */
+    min-width: 320px; /* Min width */
+    height: 100vh;
+    background-color: var(--current-modal-bg); /* Solid background for the sidebar, uses theme variable */
+    box-shadow: -3px 0px 10px rgba(0, 0, 0, 0.15); /* Shadow on the left edge */
+    overflow-y: hidden; /* Content will handle its own scrolling */
 }
 
 .checkout-modal-content-ph1 {
-    background-color: var(--current-modal-bg);
-    color: var(--current-text);
-    margin: auto;
-    padding: 20px;
-    border: 1px solid var(--current-card-border);
-    border-radius: 8px;
-    width: 90%;
-    max-width: 700px; /* Max width for the modal */
-    box-shadow: 0 8px 25px var(--current-modal-shadow);
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    max-height: 90vh; /* Max height */
+    margin: 0; 
+    padding: 0; /* Header/Body/Footer will have their own padding */
+    border: none; 
+    background-color: transparent; /* Parent .checkout-modal has background */
+    color: var(--current-text); /* Ensure text color is themed */
 }
 
 .checkout-modal-header-ph1 {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--current-card-border); /* Themed border */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--current-card-border);
-    margin-bottom: 15px;
 }
 
 .checkout-modal-header-ph1 h2 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.4em; /* Slightly adjusted font size */
+    color: var(--current-text); /* Ensure text color is themed */
 }
 
 /* .close-button is already defined, ensure it works here or specialize if needed */
 #checkout-modal-close-ph1 { 
-    /* Uses general .close-button styles */
+    /* Uses general .close-button styles, ensure it's themed */
+    color: var(--current-text);
+}
+#checkout-modal-close-ph1:hover {
+    opacity: 0.7;
 }
 
+
 .checkout-modal-body-ph1 {
-    overflow-y: auto; /* Scroll for content */
-    padding-right: 10px; /* For scrollbar */
-    margin-bottom: 15px;
-    flex-grow: 1; /* Allows body to take available space */
+    padding: 20px;
+    overflow-y: auto; /* Allow body to scroll if content is long */
+    flex-grow: 1; /* Takes available vertical space */
+    color: var(--current-text); /* Ensure text color is themed */
+    background-color: var(--current-bg); /* Body background can be main page bg or modal bg */
 }
 
 .checkout-modal-footer-ph1 {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 15px;
-    border-top: 1px solid var(--current-card-border);
+    padding: 15px 20px;
+    border-top: 1px solid var(--current-card-border); /* Themed border */
+    text-align: right; /* Align buttons to the right */
+    background-color: var(--current-modal-bg); /* Footer bg same as header/modal */
 }
 
 .checkout-modal-footer-ph1 button {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
     margin-left: 10px;
-    font-weight: bold;
+    padding: 10px 15px; /* Adjusted padding */
+    border-radius: 4px; /* Standardized border radius */
+    cursor: pointer;
+    border: none; /* Removing default border for themed buttons */
+    font-weight: bold; /* Ensure text is bold like before */
+    transition: background-color 0.3s, transform 0.2s; /* Keep transitions */
 }
+
+/* Ensure agent widget is on top if its styles are here */
+/* .agent-widget { z-index: 10000 !important; } */
+/* It's better to set this in agent_widget.css or via its own JS if possible */
 
 #checkout-cancel-btn-ph1 {
     background-color: var(--current-secondary-button-bg);
