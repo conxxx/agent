@@ -1,0 +1,1252 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Theme Variables */
+:root {
+    /* Light Theme Variables */
+    --background-color-light: #f4f4f4;
+    --text-color-light: #333;
+    --header-bg-light: #e0e0e0;
+    --footer-bg-light: #333;
+    --footer-text-light: #f4f4f4;
+    --card-bg-light: #fff;
+    --card-border-light: #ddd;
+    --button-bg-light: #007bff;
+    --button-text-light: #fff;
+    --secondary-button-bg-light: #6c757d;
+    --secondary-button-text-light: #fff;
+    --modal-bg-light: #fff;
+    --modal-shadow-light: rgba(0,0,0,0.2);
+    --input-border-light: #ccc;
+    --section-title-border-light: #007bff;
+    --checkout-step-active-bg-light: #007bff;
+    --checkout-step-active-text-light: #fff;
+    --checkout-step-inactive-bg-light: #e9ecef;
+    --checkout-step-inactive-text-light: #495057;
+    --agent-info-text-light: #555;
+    /* New variables for agent launcher and specific buttons - Light */
+    --agent-launcher-bg-light: #0A2E1A; /* Dark green */
+    --agent-launcher-icon-color-light: #4CAF50; /* Bright green */
+    --agent-launcher-hover-bg-light: #154225; /* Slightly lighter green */
+    --button-danger-bg-light: #e74c3c; /* Red */
+    --button-danger-text-light: #fff;
+    --button-danger-hover-bg-light: #c0392b; /* Darker red */
+    --button-neutral-bg-light: #7f8c8d; /* Gray */
+    --button-neutral-text-light: #fff;
+    --button-neutral-hover-bg-light: #6c7a7b; /* Darker gray */
+
+    /* Dark Theme Variables */
+    --background-color-dark: #1a1a1a;
+    --text-color-dark: #f0f0f0;
+    --header-bg-dark: #2c2c2c;
+    --footer-bg-dark: #111;
+    --footer-text-dark: #ccc;
+    --card-bg-dark: #252525;
+    --card-border-dark: #444;
+    --button-bg-dark: #0056b3;
+    --button-text-dark: #fff;
+    --secondary-button-bg-dark: #5a6268;
+    --secondary-button-text-dark: #fff;
+    --modal-bg-dark: #282828;
+    --modal-shadow-dark: rgba(255,255,255,0.1);
+    --input-border-dark: #555;
+    --section-title-border-dark: #3498db;
+    --checkout-step-active-bg-dark: #0056b3;
+    --checkout-step-active-text-dark: #fff;
+    --checkout-step-inactive-bg-dark: #343a40;
+    --checkout-step-inactive-text-dark: #adb5bd;
+    --agent-info-text-dark: #bbb;
+    /* New variables for agent launcher and specific buttons - Dark */
+    --agent-launcher-bg-dark: #05170E; /* Darker green for dark mode */
+    --agent-launcher-icon-color-dark: #66BB6A; /* Lighter green for dark mode */
+    --agent-launcher-hover-bg-dark: #0D2B1A; /* Darker hover green for dark mode */
+    --button-danger-bg-dark: #D32F2F; /* Slightly less bright red for dark mode */
+    --button-danger-text-dark: #fff;
+    --button-danger-hover-bg-dark: #B71C1C; /* Darker red for hover in dark mode */
+    --button-neutral-bg-dark: #616161; /* Mid-dark gray for dark mode */
+    --button-neutral-text-dark: #fff;
+    --button-neutral-hover-bg-dark: #424242; /* Darker gray for hover in dark mode */
+
+    /* Default to light theme - Current Variables */
+    --current-bg: var(--background-color-light);
+    --current-text: var(--text-color-light);
+    --current-header-bg: var(--header-bg-light);
+    --current-footer-bg: var(--footer-bg-light);
+    --current-footer-text: var(--footer-text-light);
+    --current-card-bg: var(--card-bg-light);
+    --current-card-border: var(--card-border-light);
+    --current-button-bg: var(--button-bg-light);
+    --current-button-text: var(--button-text-light);
+    --current-secondary-button-bg: var(--secondary-button-bg-light);
+    --current-secondary-button-text: var(--secondary-button-text-light);
+    --current-modal-bg: var(--modal-bg-light);
+    --current-modal-shadow: var(--modal-shadow-light);
+    --current-input-border: var(--input-border-light);
+    --current-section-title-border: var(--section-title-border-light);
+    --current-checkout-step-active-bg: var(--checkout-step-active-bg-light);
+    --current-checkout-step-active-text: var(--checkout-step-active-text-light);
+    --current-checkout-step-inactive-bg: var(--checkout-step-inactive-bg-light);
+    --current-checkout-step-inactive-text: var(--checkout-step-inactive-text-light);
+    --current-agent-info-text: var(--agent-info-text-light);
+    /* New current variables defaulting to light */
+    --current-agent-launcher-bg: var(--agent-launcher-bg-light);
+    --current-agent-launcher-icon-color: var(--agent-launcher-icon-color-light);
+    --current-agent-launcher-hover-bg: var(--agent-launcher-hover-bg-light);
+    --current-button-danger-bg: var(--button-danger-bg-light);
+    --current-button-danger-text: var(--button-danger-text-light);
+    --current-button-danger-hover-bg: var(--button-danger-hover-bg-light);
+    --current-button-neutral-bg: var(--button-neutral-bg-light);
+    --current-button-neutral-text: var(--button-neutral-text-light);
+    --current-button-neutral-hover-bg: var(--button-neutral-hover-bg-light);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background-color: var(--current-bg);
+    color: var(--current-text);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.night-mode {
+    --current-bg: var(--background-color-dark);
+    --current-text: var(--text-color-dark);
+    --current-header-bg: var(--header-bg-dark);
+    --current-footer-bg: var(--footer-bg-dark);
+    --current-footer-text: var(--footer-text-dark);
+    --current-card-bg: var(--card-bg-dark);
+    --current-card-border: var(--card-border-dark);
+    --current-button-bg: var(--button-bg-dark);
+    --current-button-text: var(--button-text-dark);
+    --current-secondary-button-bg: var(--secondary-button-bg-dark);
+    --current-secondary-button-text: var(--secondary-button-text-dark);
+    --current-modal-bg: var(--modal-bg-dark);
+    --current-modal-shadow: var(--modal-shadow-dark);
+    --current-input-border: var(--input-border-dark);
+    --current-section-title-border: var(--section-title-border-dark);
+    --current-checkout-step-active-bg: var(--checkout-step-active-bg-dark);
+    --current-checkout-step-active-text: var(--checkout-step-active-text-dark);
+    --current-checkout-step-inactive-bg: var(--checkout-step-inactive-bg-dark);
+    --current-checkout-step-inactive-text: var(--checkout-step-inactive-text-dark);
+    --current-agent-info-text: var(--agent-info-text-dark);
+    /* New current variable overrides for night mode */
+    --current-agent-launcher-bg: var(--agent-launcher-bg-dark);
+    --current-agent-launcher-icon-color: var(--agent-launcher-icon-color-dark);
+    --current-agent-launcher-hover-bg: var(--agent-launcher-hover-bg-dark);
+    --current-button-danger-bg: var(--button-danger-bg-dark);
+    --current-button-danger-text: var(--button-danger-text-dark);
+    --current-button-danger-hover-bg: var(--button-danger-hover-bg-dark);
+    --current-button-neutral-bg: var(--button-neutral-bg-dark);
+    --current-button-neutral-text: var(--button-neutral-text-dark);
+    --current-button-neutral-hover-bg: var(--button-neutral-hover-bg-dark);
+}
+
+header {
+    background: var(--current-header-bg);
+    color: var(--current-text);
+    padding: 1rem 2rem; 
+    text-align: center;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    border-bottom: 2px solid var(--current-button-bg); 
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem; 
+}
+
+.agent-demo-info {
+    font-size: 0.8rem;
+    color: var(--current-agent-info-text);
+    margin-top: 0.25rem;
+}
+#current-customer-id {
+    font-weight: bold;
+}
+
+
+header div button { 
+    padding: 0.5rem 1rem;
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-left: 0.5rem;
+}
+header div button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+
+main {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem; 
+}
+
+.product-card {
+    background-color: var(--current-card-bg);
+    border: 1px solid var(--current-card-border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 5px var(--current-modal-shadow); 
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px var(--current-modal-shadow);
+}
+
+.product-card img {
+    max-width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.product-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--current-text);
+}
+
+.product-card .price {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--current-button-bg); 
+    margin-bottom: 0.5rem;
+}
+
+body.night-mode .product-card .price {
+    color: var(--current-section-title-border); 
+}
+
+.product-card .description {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    color: var(--current-text);
+    opacity: 0.8;
+    flex-grow: 1; 
+}
+
+.product-card .product-id-display { /* New style for product ID */
+    font-size: 0.75rem;
+    color: var(--current-agent-info-text);
+    margin-bottom: 0.5rem;
+    word-break: break-all;
+}
+
+.product-card button.add-to-cart-btn { 
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    font-size: 0.9rem;
+    width: 100%; 
+    margin-top: auto; 
+}
+
+.product-card button.add-to-cart-btn:hover {
+    opacity: 0.85;
+    transform: scale(1.02);
+}
+
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--current-footer-bg);
+    color: var(--current-footer-text);
+    margin-top: 2rem;
+    border-top: 2px solid var(--current-button-bg); 
+}
+
+/* Modal Base Styles (Shared by Cart and Checkout) */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6); 
+}
+
+.modal.show {
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--current-modal-bg);
+    color: var(--current-text);
+    margin: auto;
+    padding: 25px;
+    border: 1px solid var(--current-card-border); 
+    border-radius: 10px;
+    width: 90%;
+    box-shadow: 0 5px 20px var(--current-modal-shadow); 
+    position: relative; 
+    animation: fadeInModal 0.3s ease-out;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close-button {
+    color: var(--current-text);
+    float: right; 
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute; 
+    top: 10px;
+    right: 20px;
+    line-height: 1; 
+}
+
+.close-button:hover,
+.close-button:focus {
+    opacity: 0.7;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Cart Modal Specifics */
+#cart-modal .modal-content {
+    max-width: 600px;
+}
+
+#cart-items-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    border-top: 1px solid var(--current-card-border);
+    border-bottom: 1px solid var(--current-card-border);
+    padding: 10px 0;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 0.5rem;
+    border-bottom: 1px dashed var(--current-card-border); 
+}
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.cart-item-details {
+    flex-grow: 1;
+}
+.cart-item-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+}
+.cart-item-details p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+.cart-item-details .product-id-display { /* Product ID in cart */
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 0.2rem;
+}
+
+
+.cart-item-actions button {
+    background-color: var(--current-button-danger-bg);
+    color: var(--current-button-danger-text);
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.2s;
+}
+.cart-item-actions button:hover {
+    background-color: var(--current-button-danger-hover-bg);
+}
+
+.cart-summary {
+    margin-top: 1.5rem;
+    text-align: right;
+}
+.cart-summary p {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+.cart-summary button {
+    padding: 0.7rem 1.3rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-left: 0.5rem;
+    font-weight: bold;
+}
+.cart-summary button:hover {
+    transform: translateY(-1px);
+}
+
+#clear-cart-btn {
+    background-color: var(--current-button-neutral-bg);
+    color: var(--current-button-neutral-text);
+}
+#clear-cart-btn:hover {
+    background-color: var(--current-button-neutral-hover-bg);
+}
+#checkout-btn { 
+    background-color: var(--current-button-bg); 
+    color: var(--current-button-text);
+}
+#checkout-btn:hover {
+    opacity: 0.85;
+}
+
+/* Recommendations Section */
+#recommendations-section {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--current-section-title-border);
+}
+
+#recommendations-section h2 {
+    text-align: center;
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+    color: var(--current-text);
+}
+
+.recommended-grid .product-card {
+    padding: 0.8rem; 
+    box-shadow: 0 1px 3px var(--current-modal-shadow);
+}
+.recommended-grid .product-card:hover {
+    box-shadow: 0 2px 6px var(--current-modal-shadow);
+}
+.recommended-grid .product-card img { height: 120px; }
+.recommended-grid .product-card h3 { font-size: 1rem; }
+.recommended-grid .product-card .price { font-size: 0.9rem; }
+.recommended-grid .product-card .description {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem; 
+    display: -webkit-box; 
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.4em;
+}
+.recommended-grid .product-card button.add-to-cart-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* Checkout Modal Styles */
+#checkout-modal .modal-content {
+    max-width: 700px; 
+}
+
+.checkout-steps {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--current-card-border);
+}
+.checkout-steps .step {
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    background-color: var(--current-checkout-step-inactive-bg);
+    color: var(--current-checkout-step-inactive-text);
+    font-size: 0.9rem;
+    transition: background-color 0.3s, color 0.3s;
+}
+.checkout-steps .step.active {
+    background-color: var(--current-checkout-step-active-bg);
+    color: var(--current-checkout-step-active-text);
+    font-weight: bold;
+}
+
+#shipping-form h3, #order-review-section h3 {
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    margin-bottom: 0.8rem;
+    color: var(--current-text);
+    border-bottom: 1px solid var(--current-card-border);
+    padding-bottom: 0.3rem;
+}
+#shipping-form div {
+    margin-bottom: 0.8rem;
+}
+#shipping-form label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+#shipping-form input[type="text"],
+#shipping-form input[type="email"] { 
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--current-input-border);
+    border-radius: 4px;
+    background-color: var(--current-bg); 
+    color: var(--current-text);
+    font-size: 0.9rem;
+}
+#shipping-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--current-button-bg);
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25); 
+}
+body.night-mode #shipping-form input[type="text"]:focus {
+    box-shadow: 0 0 0 2px rgba(52,152,219,0.35); 
+}
+
+.payment-options label {
+    margin-right: 1rem;
+    font-weight: normal;
+    font-size: 0.9rem;
+}
+.payment-options input[type="radio"] {
+    margin-right: 0.3rem;
+}
+.payment-note {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 0.5rem;
+}
+
+button.checkout-action-btn {
+    display: block;
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1rem;
+    font-weight: bold;
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: background-color 0.3s, transform 0.2s;
+}
+button.checkout-action-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+button.checkout-action-btn.secondary-btn {
+    background-color: var(--current-secondary-button-bg);
+    color: var(--current-secondary-button-text);
+    margin-top: 0.5rem; 
+}
+button.checkout-action-btn.secondary-btn:hover {
+    opacity: 0.85;
+}
+
+/* Order Review Section Styles */
+#order-review-section {
+    margin-top: 1rem;
+}
+#review-shipping-details, #review-cart-items, #review-cart-summary {
+    margin-bottom: 1.5rem;
+    padding: 0.8rem;
+    border: 1px solid var(--current-card-border);
+    border-radius: 5px;
+}
+#order-review-section h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--current-text);
+}
+#review-shipping-details p, #review-cart-items .review-item p {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+.review-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+    border-bottom: 1px dashed var(--current-card-border);
+}
+.review-item:last-child {
+    border-bottom: none;
+}
+.review-item .name {
+    flex-grow: 1;
+}
+.review-item .qty, .review-item .price {
+    margin-left: 1rem;
+    min-width: 60px; 
+    text-align: right;
+}
+#review-cart-summary p {
+    text-align: right;
+    font-size: 1rem;
+}
+#review-cart-summary p strong {
+    font-size: 1.2rem;
+}
+
+/* Agent Widget Positioning */
+/* Agent Widget Positioning - Styles for the widget itself are in agent_widget.css */
+/* Ensure it's display:none by default if toggled by JS */
+
+#agent-launcher-icon {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--current-agent-launcher-bg); /* Same dark green as widget */
+    color: var(--current-agent-launcher-icon-color); /* Bright green icon */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8em; /* Icon size */
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000; /* Above other content */
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+}
+
+#agent-launcher-icon:hover {
+    transform: scale(1.1);
+    background-color: var(--current-agent-launcher-hover-bg); /* Slightly lighter green on hover */
+}
+
+/* This rule ensures the included .agent-widget is also fixed if it's made visible */
+body > .agent-widget {
+    position: fixed;
+    bottom: 30px; /* Align with launcher or adjust as needed */
+    right: 30px;
+    z-index: 999; /* Below launcher if launcher is still visible, or manage visibility with JS */
+    /* display: none; is in agent_widget.css, JS will toggle to flex/block */
+}
+
+/* Product Detail Page Specific Styles */
+.product-detail-page .container { /* Using .container if you have one, or adjust selector */
+    max-width: 1100px; /* Or your preferred max-width */
+    margin: 20px auto;
+}
+
+.product-detail-container {
+    display: flex;
+    gap: 2rem; /* Space between image and info */
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap; /* Allow columns to stack on smaller screens */
+}
+
+.product-image-column {
+    flex: 1 1 350px; /* Grow, shrink, basis */
+    max-width: 400px; /* Max width for the image container */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.product-image-column img {
+    width: 100%;
+    max-width: 100%; /* Ensure image is responsive within its column */
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--current-card-border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.product-info-column {
+    flex: 2 1 450px; /* Info column takes more space */
+    display: flex;
+    flex-direction: column;
+}
+
+.product-info-column h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--current-text);
+}
+
+.product-info-column .product-id-display {
+    font-size: 0.85rem;
+    color: var(--current-agent-info-text); /* Using agent-info-text for muted color */
+    margin-bottom: 1rem;
+}
+
+.product-info-column .price {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--current-button-bg); /* Theme color for price */
+    margin-bottom: 1rem;
+}
+
+body.night-mode .product-info-column .price {
+    color: var(--current-section-title-border); /* Different price color for night mode if needed */
+}
+
+.product-info-column .description {
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+    color: var(--current-text);
+    opacity: 0.9;
+}
+
+.product-attributes {
+    margin-bottom: 1.5rem;
+}
+
+.product-attributes h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--current-card-border);
+    padding-bottom: 0.4rem;
+}
+
+.product-attributes ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.product-attributes ul li {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.product-attributes ul li strong {
+    color: var(--current-text); /* Ensure strong tags are also themed */
+    margin-right: 0.5em;
+}
+
+.product-info-column .add-to-cart-btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    text-align: center;
+    display: inline-block; /* Or block if it should take full width */
+    margin-top: 1rem; /* Space above the button */
+}
+
+.product-info-column .add-to-cart-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+#add-to-cart-feedback {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    text-align: center;
+}
+
+
+.related-products-section {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--current-section-title-border);
+}
+
+.related-products-section h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    color: var(--current-text);
+}
+
+/* Responsive adjustments for product detail page */
+@media (max-width: 768px) {
+    .product-detail-container {
+        flex-direction: column;
+    }
+    .product-image-column, .product-info-column {
+        max-width: 100%; /* Allow columns to take full width when stacked */
+        flex-basis: auto; /* Reset flex-basis */
+    }
+    .product-info-column h1 {
+        font-size: 1.8rem;
+    }
+    .product-info-column .price {
+        font-size: 1.5rem;
+    }
+}
+
+/* Ensure .container class is defined if not already present for general layout */
+.container {
+    width: 90%;
+    max-width: 1200px; /* Default max-width, product detail page uses 1100px */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Phase 1 Checkout Modal Styles */
+.checkout-modal { /* Replaces .modal for Phase 1 to avoid conflict if old one is still used */
+    display: none; 
+    position: fixed;
+    z-index: 1050; /* Higher than other modals if any */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7); /* Darker overlay */
+    align-items: center; /* For centering content */
+    justify-content: center; /* For centering content */
+}
+
+.checkout-modal-content-ph1 {
+    background-color: var(--current-modal-bg);
+    color: var(--current-text);
+    margin: auto;
+    padding: 20px;
+    border: 1px solid var(--current-card-border);
+    border-radius: 8px;
+    width: 90%;
+    max-width: 700px; /* Max width for the modal */
+    box-shadow: 0 8px 25px var(--current-modal-shadow);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Max height */
+}
+
+.checkout-modal-header-ph1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--current-card-border);
+    margin-bottom: 15px;
+}
+
+.checkout-modal-header-ph1 h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+/* .close-button is already defined, ensure it works here or specialize if needed */
+#checkout-modal-close-ph1 { 
+    /* Uses general .close-button styles */
+}
+
+.checkout-modal-body-ph1 {
+    overflow-y: auto; /* Scroll for content */
+    padding-right: 10px; /* For scrollbar */
+    margin-bottom: 15px;
+    flex-grow: 1; /* Allows body to take available space */
+}
+
+.checkout-modal-footer-ph1 {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 15px;
+    border-top: 1px solid var(--current-card-border);
+}
+
+.checkout-modal-footer-ph1 button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+#checkout-cancel-btn-ph1 {
+    background-color: var(--current-secondary-button-bg);
+    color: var(--current-secondary-button-text);
+}
+#checkout-cancel-btn-ph1:hover {
+    opacity: 0.85;
+}
+
+#checkout-next-btn-ph1 {
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+}
+#checkout-next-btn-ph1:hover {
+    opacity: 0.85;
+}
+#checkout-next-btn-ph1:disabled {
+    background-color: var(--current-checkout-step-inactive-bg);
+    color: var(--current-checkout-step-inactive-text);
+    cursor: not-allowed;
+}
+
+/* Item Selection Specific Styles */
+.checkout-item-selection-ph1 {
+    /* Container for all items */
+}
+
+.checkout-item-ph1 {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--current-card-border);
+}
+.checkout-item-ph1:last-child {
+    border-bottom: none;
+}
+
+.checkout-item-ph1 input[type="checkbox"] {
+    margin-right: 15px;
+    width: 20px; /* Larger checkbox */
+    height: 20px; /* Larger checkbox */
+    cursor: pointer;
+}
+
+.checkout-item-ph1 img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 15px;
+    border: 1px solid var(--current-card-border);
+}
+
+.checkout-item-details-ph1 {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Responsive columns */
+    gap: 10px;
+    align-items: center;
+}
+
+.checkout-item-details-ph1 .item-name-ph1 {
+    font-weight: bold;
+    font-size: 1rem;
+}
+.checkout-item-details-ph1 .item-qty-ph1,
+.checkout-item-details-ph1 .item-price-ph1,
+.checkout-item-details-ph1 .item-total-ph1 {
+    font-size: 0.9rem;
+    text-align: right; /* Align numerical data to the right */
+}
+.checkout-item-details-ph1 .item-qty-ph1::before { content: "Qty: "; opacity: 0.7; }
+.checkout-item-details-ph1 .item-price-ph1::before { content: "Each: "; opacity: 0.7; }
+.checkout-item-details-ph1 .item-total-ph1::before { content: "Total: "; opacity: 0.7; }
+
+
+.checkout-item-selection-controls-ph1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--current-card-border);
+}
+.checkout-item-selection-controls-ph1 label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.checkout-item-selection-controls-ph1 input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Phase 2: Shipping Information Styles */
+#checkout-modal-body-ph1 h3 { /* For "Review Your Items", "Shipping Method", "Payment Information" */
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--current-text);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--current-card-border);
+}
+
+#checkout-modal-body-ph1 h4 { /* For "Home Delivery Address", "Select Pick-up Location" */
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--current-text);
+}
+
+.shipping-method-options label,
+#pickup-location-details label {
+    display: block;
+    margin-bottom: 0.8rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.shipping-method-options input[type="radio"],
+#pickup-location-details input[type="radio"] {
+    margin-right: 8px;
+    accent-color: var(--current-button-bg); /* Styles the radio button itself */
+}
+
+#home-delivery-details label {
+    display: block;
+    margin-top: 0.8rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+#home-delivery-details input[type="text"] {
+    width: 100%;
+    padding: 0.7rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--current-input-border);
+    border-radius: 4px;
+    background-color: var(--current-bg);
+    color: var(--current-text);
+    font-size: 0.95rem;
+}
+
+#home-delivery-details input[type="text"]:focus {
+    border-color: var(--current-button-bg);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--current-button-bg-transparent, rgba(0, 123, 255, 0.25)); /* Fallback if var not defined */
+}
+
+/* Ensure checkout item list has some styling if not already present from Ph1 */
+.checkout-item-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+.checkout-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--current-card-border);
+}
+.checkout-item:last-child {
+    border-bottom: none;
+}
+.checkout-item .item-name {
+    flex-grow: 1;
+}
+.checkout-item .item-quantity {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    min-width: 60px; /* Align prices */
+    text-align: right;
+}
+.checkout-item .item-price {
+    font-weight: bold;
+    min-width: 80px; /* Align prices */
+    text-align: right;
+}
+.checkout-subtotal {
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 1rem;
+}
+
+/* General improvements for modal footer buttons if needed */
+#checkout-modal-ph1 .modal-footer-ph1 button {
+    padding: 0.6rem 1.2rem; /* Consistent padding */
+}
+
+/* Phase 3: Payment Options Styling */
+.payment-method-options label,
+#saved-card-details label,
+#new-card-details label {
+    display: block;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.payment-method-options input[type="radio"],
+#saved-card-details input[type="radio"] {
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+#new-card-details input[type="text"] {
+    width: 100%;
+    padding: 0.6rem;
+    margin-top: 0.3rem;
+    margin-bottom: 0.8rem; /* Add some space below each input */
+    border: 1px solid var(--current-input-border);
+    border-radius: 4px;
+    background-color: var(--current-bg);
+    color: var(--current-text);
+    font-size: 0.9rem;
+}
+
+#new-card-details input[type="text"]:focus {
+    border-color: var(--current-button-bg);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--current-button-bg-transparent, rgba(0, 123, 255, 0.25)); /* Fallback if var not defined */
+}
+
+/* Ensure a transparent version of button bg for focus shadow */
+:root {
+    --button-bg-transparent-light: rgba(0, 123, 255, 0.25);
+    --button-bg-transparent-dark: rgba(0, 86, 179, 0.35);
+    --current-button-bg-transparent: var(--button-bg-transparent-light);
+}
+
+body.night-mode {
+    --current-button-bg-transparent: var(--button-bg-transparent-dark);
+}
+
+#saved-card-details,
+#new-card-details {
+    padding: 1rem;
+    border: 1px solid var(--current-card-border);
+    border-radius: 5px;
+    background-color: var(--current-bg-slightly-dimmed, var(--current-bg)); /* Fallback if var not defined */
+}
+
+/* Define a slightly dimmed background for these sections if desired */
+:root {
+    --background-color-slightly-dimmed-light: #e9ecef; /* Example for light mode */
+    --background-color-slightly-dimmed-dark: #212121;  /* Example for dark mode */
+    --current-bg-slightly-dimmed: var(--background-color-slightly-dimmed-light);
+}
+body.night-mode {
+    --current-bg-slightly-dimmed: var(--background-color-slightly-dimmed-dark);
+}
+
+#checkout-modal-ph1 h3,
+#checkout-modal-ph1 h4 {
+    margin-top: 0.5rem;
+    margin-bottom: 0.8rem;
+    color: var(--current-text);
+}
+#checkout-modal-ph1 h4 {
+    font-size: 1.05rem;
+    border-bottom: 1px solid var(--current-card-border);
+    padding-bottom: 0.4rem;
+}
+
+/* --- Phase 4: Order Review Step Styles --- */
+.checkout-item-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.checkout-item-list .checkout-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--current-card-border);
+}
+
+.checkout-item-list .checkout-item:last-child {
+    border-bottom: none;
+}
+
+.checkout-item .item-name {
+    flex-grow: 1;
+    margin-right: 1rem;
+}
+
+.checkout-item .item-price {
+    font-weight: bold;
+}
+
+.checkout-subtotal,
+.checkout-total-amount {
+    text-align: right;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+.checkout-total-amount {
+    font-size: 1.3rem;
+    color: var(--current-button-bg);
+    padding-top: 0.5rem;
+    border-top: 2px solid var(--current-section-title-border);
+    margin-top: 1rem;
+}
+
+#checkout-modal-body-ph1 h3 { /* General heading for sections in review */
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--current-section-title-border);
+    font-size: 1.2rem;
+}
+#checkout-modal-body-ph1 h3:first-child {
+    margin-top: 0;
+}
+
+#checkout-modal-body-ph1 h4 { /* Sub-headings within sections */
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+}
+#checkout-modal-body-ph1 p {
+    margin-bottom: 0.3rem;
+    line-height: 1.5;
+}
+
+/* --- Phase 5: Order Confirmation Screen --- */
+.order-confirmation-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+}
+
+.order-confirmation-content h2 {
+    color: var(--text-color-strong); /* Or a specific success color */
+    margin-bottom: 15px;
+}
+
+.order-confirmation-content p {
+    color: var(--text-color);
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.order-confirmation-content strong {
+    color: var(--accent-color); /* Or a specific highlight color */
+}

@@ -1,0 +1,563 @@
+/* Styles for agent_widget.html - can be embedded or standalone */
+/* The body styles below are for standalone viewing of agent_widget.html. */
+/* When embedded, these might conflict, so they are commented out by default. */
+/*
+body.agent-widget-standalone {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #333; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+*/
+
+.agent-widget {
+    display: none; /* Hidden by default - JS will change to flex when active */
+    width: 320px; /* Slightly wider for better spacing */
+    height: 600px; /* Slightly taller */
+    background-color: #0A2E1A; /* Darker, more desaturated green */
+    border-radius: 25px; /* More pronounced rounding */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    /* display: flex; /* This will be set by JavaScript when the widget is shown */
+    flex-direction: column;
+    color: #D0E0D8; /* Softer light text color */
+    overflow: hidden;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px; /* Adjusted padding */
+    border-bottom: 1px solid #154225; /* Subtler separator */
+}
+
+.logo-title {
+    display: flex;
+    align-items: center;
+    flex-grow: 1; /* Allow it to take space */
+}
+
+.logo {
+    font-size: 1.5em; /* Icon size */
+    color: #4CAF50; /* Brighter green for leaf icon */
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; /* Container for icon */
+    height: 30px;
+}
+
+.logo .fa-leaf {
+    filter: drop-shadow(0 0 2px rgba(76, 175, 80, 0.7));
+}
+
+.title {
+    font-size: 0.95em;
+    font-weight: 600; /* Slightly bolder */
+    white-space: nowrap;
+}
+
+.status-dot {
+    width: 9px;
+    height: 9px;
+    background-color: #32CD32; /* Lime green for status */
+    border-radius: 50%;
+    border: 1px solid #0A2E1A;
+    margin-left: 8px; /* Space from title */
+    align-self: center; /* Vertically align with title center */
+    position: relative;
+    top: -8px; /* Nudge to be near baseline of title */
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+}
+
+.minimize-btn,
+.close-btn {
+    margin-left: 15px; /* Increased spacing */
+    cursor: pointer;
+    font-size: 1em; /* Adjusted icon size */
+    color: #90b0a0; /* Muted control icons */
+}
+
+.minimize-btn:hover,
+.close-btn:hover {
+    color: #D0E0D8;
+}
+
+.widget-body {
+    flex-grow: 1;
+    overflow: hidden; /* Added */
+    display: flex;
+    flex-direction: column; /* Added */
+    padding: 10px; /* Changed from 20px */
+    background-color: #0C351F; /* Slightly different shade for body */
+    /* justify-content: center; Removed */
+    /* align-items: center; Removed */
+}
+
+.audio-visualizer-container {
+    width: 160px;
+    height: 160px;
+    border: 4px solid #28a745; /* Brighter green border */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);
+}
+
+.audio-visualizer {
+    width: 80%; /* Adjusted width for visualizer content */
+    height: 60%; /* Adjusted height for visualizer content */
+    display: flex;
+    justify-content: space-around; /* Distribute bars evenly */
+    align-items: center; /* Align bars vertically centered */
+}
+
+.audio-visualizer .bar {
+    background-color: #28a745; /* Bright green for bars */
+    width: 5px; /* Bar width */
+    height: 10%; /* Default minimal height */
+    border-radius: 3px;
+    transform-origin: bottom; /* Animation scales from bottom */
+    transform: scaleY(0.1); /* Default scale */
+    transition: transform 0.1s ease-out; /* Smooth transition for JS updates */
+}
+
+/* Styles for Video Mode */
+.video-display-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #082515; /* Slightly different dark background for video area */
+}
+
+#agent-video-element {
+    width: calc(100% - 40px); /* Full width with some padding */
+    max-height: 70%; /* Limit height */
+    background-color: #000;
+    border-radius: 15px; /* Rounded corners for video */
+    margin-bottom: 15px;
+    object-fit: cover; /* Cover the area, might crop */
+}
+
+.stop-video-btn {
+    background-color: rgba(40, 167, 69, 0.8); /* Semi-transparent green */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.stop-video-btn i {
+    margin-right: 8px;
+}
+
+.stop-video-btn:hover {
+    background-color: rgba(40, 167, 69, 1); /* Solid green on hover */
+}
+
+/* Styles for Text Chat Mode */
+.text-chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Fill widget-body */
+    width: 100%;
+    overflow: hidden; /* Prevent internal overflow from breaking layout */
+    padding: 0; /* Changed from 10px */
+    box-sizing: border-box; /* Added */
+}
+
+.message-area {
+    flex-grow: 1; /* Allow it to take available space */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 10px; /* Kept padding, can be adjusted e.g. padding: 10px 8px; */
+    /* margin-bottom: 10px; Removed */
+    background-color: rgba(0,0,0,0.1); /* Keep or change as per new theme */
+    border-radius: 8px; /* Keep or change */
+    display: flex; /* To stack messages */
+    flex-direction: column; /* Stack messages vertically */
+    gap: 10px; /* Space between messages */
+}
+
+.chat-input {
+    flex-grow: 1; /* Take available width */
+    padding: 10px 12px; /* Reduced padding */
+    border-radius: 25px; /* Pill shape */
+    border: 1px solid #1E5330; /* Theme border */
+    background-color: #082515; /* Darker input bg */
+    color: #D0E0D8;
+    font-size: 0.9em;
+    margin-right: 5px; /* Reduced space before send button */
+}
+
+.chat-input::placeholder {
+    color: #608070;
+}
+
+
+.widget-footer {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px; /* Reduced padding */
+    border-top: 1px solid #154225; /* Subtler separator */
+    background-color: #0A2E1A; /* Same as header for consistency */
+    gap: 8px; /* Reduced spacing between input area and icon group */
+}
+
+.footer-icon {
+    width: 36px; /* Reduced size */
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1em; /* Reduced icon font size */
+    color: #D0E0D8;
+    transition: background-color 0.2s ease;
+}
+
+.footer-icon i {
+    line-height: 1; /* Ensure icons are not cut off */
+}
+
+.chat-icon,
+.mic-icon,
+.video-toggle-btn {
+    background-color: #154225; /* Darker green for icon backgrounds */
+}
+
+.chat-icon:hover,
+.mic-icon:hover,
+.video-toggle-btn:hover {
+    background-color: #1E5330;
+}
+
+.mic-icon.active { /* Style for when microphone is active */
+    background-color: #28a745; /* Brighter green */
+    color: #fff;
+}
+.video-toggle-btn.active { /* Style for when video is active */
+    background-color: #28a745; /* Brighter green */
+    color: #fff;
+}
+
+
+.text-input-placeholder {
+    color: #608070; /* Muted color for placeholder dots */
+    font-size: 2em; /* Larger dots */
+    letter-spacing: 3px;
+    line-height: 1;
+    flex-grow: 1;
+    text-align: center;
+}
+
+.end-call-icon {
+    background-color: #CC3333; /* Slightly less harsh red */
+    color: white;
+}
+
+/* Scrollbar Styling */
+.message-area::-webkit-scrollbar {
+    width: 6px;
+}
+.message-area::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
+}
+.message-area::-webkit-scrollbar-thumb {
+    background: #4CAF50; /* Or theme color */
+    border-radius: 3px;
+}
+.message-area::-webkit-scrollbar-thumb:hover {
+    background: #3e8e41; /* Darker on hover */
+}
+
+/* Chat Input Area */
+.chat-input-area {
+    display: flex;
+    align-items: center;
+    flex-grow: 1; /* Added */
+    /* padding-top: 10px; Removed */
+    /* border-top: 1px solid #154225; Removed */
+}
+
+.footer-action-icons { /* New Rule */
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Reduced spacing between individual icons */
+    flex-shrink: 0; /* Prevent this container from shrinking */
+}
+
+.send-btn {
+    background-color: #4CAF50; /* Theme color */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Circular button */
+    width: 36px; /* Reduced size */
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1em; /* Reduced icon font size */
+    transition: background-color 0.2s ease;
+}
+.send-btn:hover {
+    background-color: #3e8e41; /* Darker on hover */
+}
+.send-btn i {
+    position: relative;
+    left: 1px; /* Slight nudge for paper plane icon centering */
+}
+
+/* Message Styling */
+.message {
+    padding: 8px 12px;
+    border-radius: 15px;
+    max-width: 75%;
+    word-wrap: break-word;
+    display: flex;
+    flex-direction: column; /* Stack text and timestamp */
+}
+.message p {
+    margin: 0 0 4px 0; /* Space between text and timestamp */
+    line-height: 1.4;
+}
+.message .timestamp {
+    font-size: 0.7em;
+    color: #80a090; /* Muted timestamp */
+    align-self: flex-end; /* Timestamp to the right */
+}
+
+.user-message {
+    background-color: #4CAF50; /* User message bubble color */
+    color: white;
+    align-self: flex-end; /* Align user messages to the right */
+    border-bottom-right-radius: 5px; /* Chat bubble tail effect */
+}
+.user-message .timestamp {
+    color: #c0e0d0; /* Lighter timestamp for dark bubble */
+}
+
+.agent-message {
+    background-color: #1E5330; /* Agent message bubble color */
+    color: #D0E0D8;
+    align-self: flex-start; /* Align agent messages to the left */
+    border-bottom-left-radius: 5px; /* Chat bubble tail effect */
+}
+
+/* --- Product Recommendations Styling --- */
+
+.product-recommendations-block {
+    width: 100%;
+    margin-top: 10px; /* Space above the recommendations block */
+    margin-bottom: 10px; /* Space below the recommendations block */
+    padding: 0 5px; /* Slight horizontal padding if needed */
+    box-sizing: border-box;
+}
+
+.recommendations-title {
+    font-size: 0.9em; /* Slightly smaller than main message text */
+    font-weight: 600;
+    color: #c0e0d0; /* Lighter text color, adjust to match widget theme */
+    margin-bottom: 12px;
+    padding-left: 5px; /* Align with card padding if any */
+    text-align: left;
+}
+
+.product-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between product cards */
+}
+
+.product-card {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa; /* Light background - white or very light gray */
+    border-radius: 12px; /* Rounded corners */
+    padding: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.product-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-card-image {
+    width: 60px; /* Adjust size as needed */
+    height: 60px;
+    border-radius: 8px; /* Rounded corners for the image */
+    object-fit: cover; /* Ensure image covers the area well */
+    margin-right: 12px;
+    border: 1px solid #e0e0e0; /* Optional subtle border for image */
+}
+
+.product-card-details {
+    flex-grow: 1; /* Takes up available space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertically center text if needed */
+    gap: 4px; /* Space between name and price */
+}
+
+.product-card-name {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #333; /* Darker text for readability on light background */
+    margin: 0;
+    line-height: 1.3;
+}
+
+.product-card-price {
+    font-size: 0.8em;
+    font-weight: 500;
+    color: #555; /* Slightly lighter than name */
+    margin: 0;
+}
+
+.product-card-link {
+    color: #4CAF50; /* Theme green color for the icon */
+    font-size: 1.1em; /* Icon size */
+    text-decoration: none;
+    padding: 8px; /* Clickable area */
+    margin-left: 10px; /* Space from text details */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease-in-out;
+}
+
+.product-card-link:hover {
+    color: #3e8e41; /* Darker green on hover */
+}
+
+/* Ensure product recommendations are not styled like user/agent messages */
+.product-recommendations-block .message,
+.product-recommendations-block .user-message,
+.product-recommendations-block .agent-message {
+    /* Override any conflicting message styles if necessary, or ensure specificity */
+    background-color: transparent;
+    padding: 0;
+    align-self: initial;
+    max-width: 100%;
+}
+
+/* --- Image Options Popup & Camera View Styling --- */
+
+.widget-footer {
+    position: relative; /* Needed for absolute positioning of the popup */
+}
+
+.image-options-popup {
+    position: absolute;
+    bottom: 50px; /* Position above the footer icons */
+    right: 10px;  /* Align with the right side of the footer */
+    background-color: #154225; /* Darker green, similar to other controls */
+    border-radius: 10px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+    padding: 8px;
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 8px;
+    z-index: 100; /* Ensure it's above other elements */
+}
+
+.image-options-popup button.footer-icon {
+    width: auto; /* Allow button to size to content */
+    padding: 8px 12px; /* Add padding for text */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Align icon and text to the left */
+    background-color: #1E5330; /* Slightly lighter green */
+    border-radius: 8px;
+    font-size: 0.9em; /* Slightly smaller text */
+}
+
+.image-options-popup button.footer-icon:hover {
+    background-color: #28a745; /* Brighter green on hover */
+}
+
+.image-options-popup button.footer-icon .icon-text {
+    margin-left: 8px; /* Space between icon and text */
+    color: #D0E0D8;
+}
+
+.image-options-popup button.footer-icon i {
+    font-size: 1em; /* Ensure icon size is consistent */
+    width: 16px; /* Fixed width for icon alignment */
+    text-align: center;
+}
+
+
+/* Camera View Styling (Phase 2) */
+.camera-view-container {
+    position: absolute; /* Or fixed, to overlay */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.85); /* Dark overlay */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 200; /* Above everything else */
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.camera-view-container #cameraFeed {
+    width: 100%;
+    max-width: 400px; /* Limit width on larger screens if widget is scaled */
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #000; /* Black background for video element */
+}
+
+.camera-controls {
+    display: flex;
+    gap: 15px;
+}
+
+.camera-controls .capture-btn,
+.camera-controls .cancel-camera-btn {
+    background-color: #4CAF50;
+    color: white;
+    /* Inherits .footer-icon styles for size, border-radius, etc. */
+}
+
+.camera-controls .cancel-camera-btn {
+    background-color: #CC3333; /* Red for cancel */
+}
+
+.camera-controls .capture-btn:hover,
+.camera-controls .cancel-camera-btn:hover {
+    opacity: 0.8;
+}
+
+/* Ensure .footer-icon.image-options-toggle-btn uses existing styles */
+.image-options-toggle-btn {
+    /* Uses existing .footer-icon styles */
+    /* Add specific hover/active if needed */
+}

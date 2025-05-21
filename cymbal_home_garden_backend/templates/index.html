@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cymbal Home Garden</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Cymbal Home Garden</h1>
+            <p class="agent-demo-info">Demoing for Customer ID: <span id="current-customer-id">default_user</span></p>
+        </div>
+        <div>
+            <button id="cart-toggle">View Cart (<span id="cart-count">0</span>)</button>
+            <button id="night-mode-toggle">Night Mode</button>
+        </div>
+    </header>
+
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Your Shopping Cart</h2>
+            <div id="cart-items-container">
+                <!-- Cart items will be inserted here -->
+                <p>Your cart is empty.</p>
+            </div>
+            <div class="cart-summary">
+                <p>Subtotal: $<span id="cart-subtotal">0.00</span></p>
+                <button id="clear-cart-btn">Clear Cart</button>
+                <button id="checkout-btn">Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <section id="product-listing" class="product-grid">
+            <!-- Product cards will be inserted here by JavaScript -->
+        </section>
+
+        <section id="recommendations-section">
+            <h2>You Might Also Like</h2>
+            <div id="recommended-products-grid" class="product-grid recommended-grid">
+                <!-- Recommended product cards will be inserted here by JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Phase 1: Checkout Modal -->
+    <div id="checkout-modal-ph1" class="checkout-modal" style="display:none;">
+        <div class="checkout-modal-content-ph1">
+            <div class="checkout-modal-header-ph1">
+                <h2 id="checkout-modal-title-ph1">Checkout</h2>
+                <span id="checkout-modal-close-ph1" class="close-button">&times;</span>
+            </div>
+            <div id="checkout-modal-body-ph1" class="checkout-modal-body-ph1">
+                <!-- Step content will be dynamically inserted here -->
+                <p>Loading checkout...</p>
+            </div>
+            <div class="checkout-modal-footer-ph1">
+                <button id="checkout-cancel-btn-ph1">Cancel</button>
+                <button id="checkout-next-btn-ph1">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="agent-launcher-icon" class="agent-launcher" style="position: fixed; bottom: 20px; right: 20px; background-color: #007bff; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 9998;">
+        <i class="fa-solid fa-comment-dots fa-2x"></i> <!-- Ensure Font Awesome is loaded -->
+    </div>
+    
+    <!-- This container will be implicitly created by the include below if agent_widget.html's root is div.agent-widget -->
+    <!-- We will control the div.agent-widget directly -->
+    {% include 'agent_widget.html' %} 
+
+    <footer>
+        <p>&copy; 2025 Cymbal Home Garden</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- agent_widget.js is loaded by the included agent_widget.html as a module -->
+    
+    <script type="module">
+        // This script should be part of your main script.js or loaded after it.
+        // For simplicity, adding it here. Ensure Font Awesome is loaded for the icon.
+        document.addEventListener('DOMContentLoaded', () => {
+            const launcherIcon = document.getElementById('agent-launcher-icon');
+            // The agent widget's main div is inside the included HTML.
+            // Its class is '.agent-widget'.
+            const agentWidgetElement = document.querySelector('.agent-widget'); 
+
+            if (launcherIcon && agentWidgetElement) {
+                launcherIcon.addEventListener('click', () => {
+                    agentWidgetElement.style.display = 'flex'; // Show the widget
+                    launcherIcon.style.display = 'none';   // Hide the launcher
+                    
+                    // Dispatch a custom event that agent_widget.js can listen for to connect
+                    // This ensures connection happens only when widget is opened.
+                    agentWidgetElement.dispatchEvent(new CustomEvent('widgetOpened', { bubbles: true }));
+                });
+
+                // Listen for a custom event from agent_widget.js to close the widget
+                agentWidgetElement.addEventListener('widgetClosed', () => {
+                    agentWidgetElement.style.display = 'none'; // Hide the widget
+                    launcherIcon.style.display = 'flex';  // Show the launcher
+                });
+
+            } else {
+                console.error("Launcher icon or agent widget element not found in index.html's DOM.");
+                if (!launcherIcon) console.error("Launcher icon missing.");
+                if (!agentWidgetElement) console.error("Agent widget (.agent-widget) missing. Check include statement and agent_widget.html structure.");
+            }
+        });
+    </script>
+</body>
+</html>
