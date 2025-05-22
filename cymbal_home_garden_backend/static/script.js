@@ -494,27 +494,75 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showCheckoutModalPh1() {
-        if (checkoutModalPh1) checkoutModalPh1.style.display = 'flex';
-        else console.error("[Checkout] Checkout modal element 'checkout-modal-ph1' not found.");
+        if (!checkoutModalPh1) {
+            console.error("[Checkout] Checkout modal element 'checkout-modal-ph1' not found.");
+            return;
+        }
+        console.log("[Checkout] Showing modal with pop-in animation.");
+        checkoutModalPh1.classList.remove('popping-out'); // Remove pop-out if it was there
+        checkoutModalPh1.classList.add('popping-in');
+        checkoutModalPh1.style.display = 'flex'; // Set display to flex to make it visible for animation
+
+        // Optional: Remove 'popping-in' after animation to prevent re-triggering if called again
+        // However, 'animation-fill-mode: forwards' handles keeping the final state.
+        // If issues arise, an event listener for 'animationend' can remove 'popping-in'.
     }
 
     function hideCheckoutModalPh1() {
-        if (checkoutModalPh1) checkoutModalPh1.style.display = 'none';
-        if (checkoutModalBodyPh1) checkoutModalBodyPh1.innerHTML = ''; 
-        if(checkoutModalTitlePh1) checkoutModalTitlePh1.textContent = 'Checkout'; 
-        checkoutProcessState = { 
-            currentStep: null, selectedItems: [],
-            shippingInfo: { method: null, address: { name: '', street: '', city: '', postalCode: '', country: '' }, pickupLocation: null, previousPickupLocations: [] },
-            paymentInfo: { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] },
-            orderTotal: 0 
-        };
-        if(nextCheckoutBtnPh1) { nextCheckoutBtnPh1.onclick = null; nextCheckoutBtnPh1.textContent = 'Next'; nextCheckoutBtnPh1.disabled = false; }
-        if(backCheckoutBtnPh1) { backCheckoutBtnPh1.onclick = null; backCheckoutBtnPh1.style.display = 'none'; }
-        if(cancelCheckoutBtnPh1) { cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1; cancelCheckoutBtnPh1.textContent = 'Cancel';}
+        if (!checkoutModalPh1) {
+            console.error("[Checkout] Checkout modal element 'checkout-modal-ph1' not found for hiding.");
+            return;
+        }
+        console.log("[Checkout] Hiding modal with pop-out animation.");
+        checkoutModalPh1.classList.remove('popping-in'); // Remove pop-in if it was there
+        checkoutModalPh1.classList.add('popping-out');
+
+        // Listen for animation end to set display: none
+        checkoutModalPh1.addEventListener('animationend', function handleAnimationEnd() {
+            console.log("[Checkout] Pop-out animation ended. Setting display to none.");
+            checkoutModalPh1.style.display = 'none';
+            checkoutModalPh1.classList.remove('popping-out'); // Clean up class
+            
+            // Clean up modal content and state after it's hidden
+            if (checkoutModalBodyPh1) checkoutModalBodyPh1.innerHTML = ''; 
+            if(checkoutModalTitlePh1) checkoutModalTitlePh1.textContent = 'Checkout'; 
+            checkoutProcessState = { 
+                currentStep: null, selectedItems: [],
+                shippingInfo: { method: null, address: { name: '', street: '', city: '', postalCode: '', country: '' }, pickupLocation: null, previousPickupLocations: [] },
+                paymentInfo: { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] },
+                orderTotal: 0 
+            };
+            if(nextCheckoutBtnPh1) { nextCheckoutBtnPh1.onclick = null; nextCheckoutBtnPh1.textContent = 'Next'; nextCheckoutBtnPh1.disabled = false; nextCheckoutBtnPh1.style.display = 'inline-block';}
+            if(backCheckoutBtnPh1) { backCheckoutBtnPh1.onclick = null; backCheckoutBtnPh1.style.display = 'none'; }
+            // Restore cancel button's original purpose if it was changed (e.g. in confirmation step)
+            if(cancelCheckoutBtnPh1) { cancelCheckoutBtnPh1.textContent = 'Cancel'; cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1; }
+
+
+            checkoutModalPh1.removeEventListener('animationend', handleAnimationEnd); // Clean up listener
+        }, { once: true }); // Ensure the listener runs only once
     }
 
+    // Original content reset logic, now moved into the animationend handler for hideCheckoutModalPh1
+    /*
+    function hideCheckoutModalPh1_OLD_CONTENT_RESET_LOGIC() {
+        // if (checkoutModalPh1) checkoutModalPh1.style.display = 'none'; // This is now handled by animationend
+        // if (checkoutModalBodyPh1) checkoutModalBodyPh1.innerHTML = ''; 
+        // if(checkoutModalTitlePh1) checkoutModalTitlePh1.textContent = 'Checkout'; 
+        // checkoutProcessState = { 
+        //     currentStep: null, selectedItems: [],
+        //     shippingInfo: { method: null, address: { name: '', street: '', city: '', postalCode: '', country: '' }, pickupLocation: null, previousPickupLocations: [] },
+        //     paymentInfo: { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] },
+        //     orderTotal: 0 
+        // };
+        // if(nextCheckoutBtnPh1) { nextCheckoutBtnPh1.onclick = null; nextCheckoutBtnPh1.textContent = 'Next'; nextCheckoutBtnPh1.disabled = false; }
+        // if(backCheckoutBtnPh1) { backCheckoutBtnPh1.onclick = null; backCheckoutBtnPh1.style.display = 'none'; }
+        // if(cancelCheckoutBtnPh1) { cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1; cancelCheckoutBtnPh1.textContent = 'Cancel';}
+    }
+    */
+
     if (closeCheckoutModalBtnPh1) closeCheckoutModalBtnPh1.addEventListener('click', hideCheckoutModalPh1);
-    if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.addEventListener('click', hideCheckoutModalPh1);
+    // Cancel button's initial behavior is to hide. It might be changed by renderOrderConfirmationStep.
+    if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.addEventListener('click', hideCheckoutModalPh1); 
 
 
     function renderCheckoutStep1ItemSelection(itemsToShow) {
@@ -604,8 +652,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let pickupLocationsDiv = checkoutModalBodyPh1.querySelector('#pickup-location-details-container');
         const pickupPlaceholderDiv = checkoutModalBodyPh1.querySelector('#pickup-message-placeholder');
 
+        // Function to clear selection animation from other options
+        function clearSelectionAnimation(selector) {
+            checkoutModalBodyPh1.querySelectorAll(selector).forEach(el => {
+                const parentLabel = el.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.remove('option-selected-visual-cue');
+                }
+            });
+        }
+
         checkoutModalBodyPh1.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
+                clearSelectionAnimation('input[name="shippingMethod"]');
+                clearSelectionAnimation('input[name="pickupLocationOption"]'); // Also clear pickup if method changes
+                const parentLabel = e.target.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('option-selected-visual-cue');
+                }
+
                 shipInfo.method = e.target.value;
                 homeDeliveryDiv.style.display = shipInfo.method === 'home' ? 'block' : 'none';
                 
@@ -613,6 +678,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (hasPreviousPickupLocations) {
                         pickupLocationsDiv.style.display = 'block';
                         pickupPlaceholderDiv.style.display = 'none';
+                        // If there are previous locations, a selection is needed.
+                        // Check if one is already selected from checkoutProcessState
+                        const currentlySelectedPickup = checkoutModalBodyPh1.querySelector('input[name="pickupLocationOption"]:checked');
+                        if (currentlySelectedPickup) {
+                            currentlySelectedPickup.closest('label').classList.add('option-selected-visual-cue');
+                        }
                     } else {
                         pickupLocationsDiv.style.display = 'none';
                         pickupPlaceholderDiv.style.display = 'block';
@@ -624,12 +695,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (shipInfo.method === 'home') shipInfo.pickupLocation = null; else Object.keys(addr).forEach(k => addr[k] = '');
                 nextCheckoutBtnPh1.disabled = !(shipInfo.method === 'home' || (shipInfo.method === 'pickup' && (shipInfo.pickupLocation || !hasPreviousPickupLocations)));
             });
+            // Apply initial selection glow if a method is already selected
+            if (radio.checked) {
+                const parentLabel = radio.closest('label');
+                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
+            }
         });
         ['name', 'street', 'city', 'postalCode', 'country'].forEach(id => {
             checkoutModalBodyPh1.querySelector(`#shipping-${id}`)?.addEventListener('input', e => { addr[id] = e.target.value; });
         });
         checkoutModalBodyPh1.querySelectorAll('input[name="pickupLocationOption"]')?.forEach(radio => {
-            radio.addEventListener('change', e => { shipInfo.pickupLocation = e.target.value; nextCheckoutBtnPh1.disabled = false; });
+            radio.addEventListener('change', e => {
+                clearSelectionAnimation('input[name="pickupLocationOption"]');
+                const parentLabel = e.target.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('option-selected-visual-cue');
+                }
+                shipInfo.pickupLocation = e.target.value;
+                nextCheckoutBtnPh1.disabled = false;
+            });
+             // Apply initial selection glow if a pickup location is already selected
+            if (radio.checked) {
+                const parentLabel = radio.closest('label');
+                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
+            }
         });
         
         if(nextCheckoutBtnPh1) {
@@ -680,11 +769,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         checkoutModalBodyPh1.innerHTML = pickupHtml;
 
+        // Function to clear selection animation from other options
+        function clearPickupSelectionAnimation() {
+            checkoutModalBodyPh1.querySelectorAll('input[name="pickupLocationOption"]').forEach(el => {
+                const parentLabel = el.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.remove('option-selected-visual-cue');
+                }
+            });
+        }
+
         checkoutModalBodyPh1.querySelectorAll('input[name="pickupLocationOption"]').forEach(radio => {
             radio.addEventListener('change', e => { 
+                clearPickupSelectionAnimation();
+                const parentLabel = e.target.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('option-selected-visual-cue');
+                }
                 checkoutProcessState.shippingInfo.pickupLocation = e.target.value; 
                 if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.disabled = false;
             });
+            // Apply initial selection glow if a location is already selected
+            if (radio.checked) {
+                const parentLabel = radio.closest('label');
+                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
+            }
         });
 
         if(nextCheckoutBtnPh1) {
@@ -740,17 +849,55 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedCardDiv = checkoutModalBodyPh1.querySelector('#saved-card-details');
         const newCardDiv = checkoutModalBodyPh1.querySelector('#new-card-details');
 
+        // Function to clear selection animation from other options
+        function clearPaymentSelectionAnimation(selector) {
+            checkoutModalBodyPh1.querySelectorAll(selector).forEach(el => {
+                const parentLabel = el.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.remove('option-selected-visual-cue');
+                }
+            });
+        }
+
         checkoutModalBodyPh1.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
             radio.addEventListener('change', e => {
+                clearPaymentSelectionAnimation('input[name="paymentMethod"]');
+                clearPaymentSelectionAnimation('input[name="savedCardOption"]'); // Also clear saved card if method changes
+
+                const parentLabel = e.target.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('option-selected-visual-cue');
+                }
+
                 payInfo.method = e.target.value;
                 savedCardDiv.style.display = payInfo.method === 'savedCard' ? 'block' : 'none';
                 newCardDiv.style.display = payInfo.method === 'newCard' ? 'block' : 'none';
-                if (payInfo.method === 'savedCard') Object.keys(newCard).forEach(k => newCard[k] = ''); else payInfo.savedCardId = null;
+                if (payInfo.method === 'savedCard') {
+                    Object.keys(newCard).forEach(k => newCard[k] = '');
+                    // Check if a saved card is already selected to apply glow
+                    const currentlySelectedSavedCard = checkoutModalBodyPh1.querySelector('input[name="savedCardOption"]:checked');
+                    if (currentlySelectedSavedCard) {
+                        currentlySelectedSavedCard.closest('label').classList.add('option-selected-visual-cue');
+                    }
+                } else {
+                    payInfo.savedCardId = null;
+                }
                 nextCheckoutBtnPh1.disabled = !(payInfo.method === 'newCard' || (payInfo.method === 'savedCard' && payInfo.savedCardId));
             });
+            // Apply initial selection glow if a payment method is already selected
+            if (radio.checked) {
+                const parentLabel = radio.closest('label');
+                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
+            }
         });
         checkoutModalBodyPh1.querySelectorAll('input[name="savedCardOption"]')?.forEach(radio => {
             radio.addEventListener('change', e => { 
+                clearPaymentSelectionAnimation('input[name="savedCardOption"]');
+                const parentLabel = e.target.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('option-selected-visual-cue');
+                }
+
                 payInfo.savedCardId = e.target.value; 
                 nextCheckoutBtnPh1.disabled = false; 
                 console.log('[Checkout] Dispatching checkoutPaymentSelected event (savedCard): ', payInfo.savedCardId);
@@ -762,6 +909,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }));
             });
+            // Apply initial selection glow if a saved card is already selected
+            if (radio.checked) {
+                const parentLabel = radio.closest('label');
+                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
+            }
         });
         ['cardNumber', 'expiryDate', 'cvv', 'cardholderName'].forEach(id => {
             const inputId = id === 'cardNumber' ? 'card-number' : id === 'expiryDate' ? 'card-expiry' : id === 'cardholderName' ? 'cardholder-name' : `card-${id}`;
@@ -842,6 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(nextCheckoutBtnPh1) {
             nextCheckoutBtnPh1.textContent = 'Submit Order';
             nextCheckoutBtnPh1.disabled = false;
+            nextCheckoutBtnPh1.style.display = 'inline-block'; // Ensure it's visible
             nextCheckoutBtnPh1.onclick = handleOrderSubmission;
         }
         if(backCheckoutBtnPh1) {
@@ -849,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
             backCheckoutBtnPh1.textContent = 'Back: Payment';
             backCheckoutBtnPh1.onclick = () => renderPaymentStep(checkoutProcessState.paymentInfo.previousPaymentMethods);
         }
-        if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1;
+        // cancelCheckoutBtnPh1.onclick is managed by hideCheckoutModalPh1 or confirmation step
     }
 
     async function handleOrderSubmission() {
@@ -891,11 +1044,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h2>Thank you!</h2>
                 <p>Your Order ID is: <strong>${orderId}</strong></p>
             </div>`;
-        if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.style.display = 'none';
-        if(backCheckoutBtnPh1) backCheckoutBtnPh1.style.display = 'none';
-        if(cancelCheckoutBtnPh1) {
+        if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.style.display = 'none'; // Hide Next button
+        if(backCheckoutBtnPh1) backCheckoutBtnPh1.style.display = 'none'; // Hide Back button
+        if(cancelCheckoutBtnPh1) { // Change Cancel to Close
             cancelCheckoutBtnPh1.textContent = 'Close';
-            cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1;
+            // Ensure this click still triggers the pop-out animation
+            cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1; 
         }
     }
 
