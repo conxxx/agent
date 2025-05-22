@@ -18,13 +18,22 @@ body.agent-widget-standalone {
     display: none; /* Hidden by default - JS will change to flex when active */
     width: 320px; /* Slightly wider for better spacing */
     height: 600px; /* Slightly taller */
-    background-color: #0A2E1A; /* Darker, more desaturated green */
-    border-radius: 25px; /* More pronounced rounding */
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    /* display: flex; /* This will be set by JavaScript when the widget is shown */
+    /* background-color, border-radius, box-shadow will be primarily controlled by style.css glassmorphism */
+    /* background-color: #0A2E1A; */ /* Commented out to allow style.css to apply glass effect */
+    /* border-radius: 25px; */ /* Commented out */
+    /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); */ /* Commented out */
+    /* Ensure these properties from style.css can apply:
+       background-color: var(--current-glass-bg);
+       backdrop-filter: blur(var(--current-glass-blur));
+       -webkit-backdrop-filter: blur(var(--current-glass-blur));
+       border-radius: var(--current-glass-border-radius);
+       box-shadow: 0 8px 32px 0 var(--current-glass-shadow);
+       border: 1px solid var(--current-glass-border-color);
+    */
+    display: flex; /* This will be set by JavaScript when the widget is shown */
     flex-direction: column;
-    color: #D0E0D8; /* Softer light text color */
-    overflow: hidden;
+    color: var(--current-text); /* Use theme text color for better compatibility */
+    overflow: hidden; /* Important for rounded corners and backdrop-filter */
 }
 
 .widget-header {
@@ -32,7 +41,15 @@ body.agent-widget-standalone {
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px; /* Adjusted padding */
-    border-bottom: 1px solid #154225; /* Subtler separator */
+    /* Consider making header background slightly different for depth */
+    background-color: rgba(0,0,0,0.05); /* Subtle dark tint for light mode, light for dark */
+    border-bottom: 1px solid var(--current-glass-border-color); /* Use glass border color */
+    border-top-left-radius: var(--current-glass-border-radius); /* Match parent radius */
+    border-top-right-radius: var(--current-glass-border-radius); /* Match parent radius */
+}
+
+body.night-mode .widget-header {
+    background-color: rgba(255,255,255,0.05); /* Subtle light tint for dark mode */
 }
 
 .logo-title {
@@ -43,7 +60,7 @@ body.agent-widget-standalone {
 
 .logo {
     font-size: 1.5em; /* Icon size */
-    color: #4CAF50; /* Brighter green for leaf icon */
+    color: var(--current-button-bg); /* Use theme color */
     margin-right: 10px;
     display: flex;
     align-items: center;
@@ -84,12 +101,14 @@ body.agent-widget-standalone {
     margin-left: 15px; /* Increased spacing */
     cursor: pointer;
     font-size: 1em; /* Adjusted icon size */
-    color: #90b0a0; /* Muted control icons */
+    color: var(--current-text); /* Use theme text color */
+    opacity: 0.7;
 }
 
 .minimize-btn:hover,
 .close-btn:hover {
-    color: #D0E0D8;
+    color: var(--current-text);
+    opacity: 1;
 }
 
 .widget-body {
@@ -98,7 +117,7 @@ body.agent-widget-standalone {
     display: flex;
     flex-direction: column; /* Added */
     padding: 10px; /* Changed from 20px */
-    background-color: #0C351F; /* Slightly different shade for body */
+    /* background-color: #0C351F; */ /* Removed to let the main glass bg show through */
     /* justify-content: center; Removed */
     /* align-items: center; Removed */
 }
@@ -106,12 +125,12 @@ body.agent-widget-standalone {
 .audio-visualizer-container {
     width: 160px;
     height: 160px;
-    border: 4px solid #28a745; /* Brighter green border */
+    border: 4px solid var(--current-button-bg); /* Use theme color */
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 0 15px var(--current-button-bg-transparent); /* Use theme shadow */
 }
 
 .audio-visualizer {
@@ -123,10 +142,10 @@ body.agent-widget-standalone {
 }
 
 .audio-visualizer .bar {
-    background-color: #28a745; /* Bright green for bars */
+    background-color: var(--current-button-bg); /* Use theme color */
     width: 5px; /* Bar width */
     height: 10%; /* Default minimal height */
-    border-radius: 3px;
+    border-radius: calc(var(--current-glass-border-radius) - 10px); /* Smaller radius for bars */
     transform-origin: bottom; /* Animation scales from bottom */
     transform: scaleY(0.1); /* Default scale */
     transition: transform 0.1s ease-out; /* Smooth transition for JS updates */
@@ -140,24 +159,24 @@ body.agent-widget-standalone {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: #082515; /* Slightly different dark background for video area */
+    /* background-color: #082515; */ /* Removed to let glass show */
 }
 
 #agent-video-element {
     width: calc(100% - 40px); /* Full width with some padding */
     max-height: 70%; /* Limit height */
-    background-color: #000;
-    border-radius: 15px; /* Rounded corners for video */
+    background-color: rgba(0,0,0,0.5); /* Darker semi-transparent bg for video */
+    border-radius: var(--current-glass-border-radius); /* Theme radius */
     margin-bottom: 15px;
     object-fit: cover; /* Cover the area, might crop */
 }
 
 .stop-video-btn {
-    background-color: rgba(40, 167, 69, 0.8); /* Semi-transparent green */
-    color: white;
+    background-color: var(--current-button-danger-bg); /* Use theme danger color */
+    color: var(--current-button-danger-text);
     border: none;
     padding: 10px 20px;
-    border-radius: 20px;
+    border-radius: var(--current-glass-border-radius); /* Theme radius */
     cursor: pointer;
     font-size: 0.9em;
     display: flex;
@@ -170,7 +189,7 @@ body.agent-widget-standalone {
 }
 
 .stop-video-btn:hover {
-    background-color: rgba(40, 167, 69, 1); /* Solid green on hover */
+    background-color: var(--current-button-danger-hover-bg); /* Theme hover */
 }
 
 /* Styles for Text Chat Mode */
@@ -189,8 +208,8 @@ body.agent-widget-standalone {
     overflow-y: auto; /* Enable vertical scrolling */
     padding: 10px; /* Kept padding, can be adjusted e.g. padding: 10px 8px; */
     /* margin-bottom: 10px; Removed */
-    background-color: rgba(0,0,0,0.1); /* Keep or change as per new theme */
-    border-radius: 8px; /* Keep or change */
+    background-color: rgba(0,0,0,0.1); /* Subtle dark background for message area */
+    border-radius: calc(var(--current-glass-border-radius) - 4px); /* Slightly smaller radius */
     display: flex; /* To stack messages */
     flex-direction: column; /* Stack messages vertically */
     gap: 10px; /* Space between messages */
@@ -199,16 +218,17 @@ body.agent-widget-standalone {
 .chat-input {
     flex-grow: 1; /* Take available width */
     padding: 10px 12px; /* Reduced padding */
-    border-radius: 25px; /* Pill shape */
-    border: 1px solid #1E5330; /* Theme border */
-    background-color: #082515; /* Darker input bg */
-    color: #D0E0D8;
+    border-radius: var(--current-glass-border-radius); /* Theme radius */
+    border: 1px solid var(--current-glass-border-color); /* Use glass border */
+    background-color: var(--current-glass-bg); /* Use glass bg for input */
+    color: var(--current-text); /* Theme text color */
     font-size: 0.9em;
     margin-right: 5px; /* Reduced space before send button */
 }
 
 .chat-input::placeholder {
-    color: #608070;
+    color: var(--current-text);
+    opacity: 0.6;
 }
 
 
@@ -216,9 +236,15 @@ body.agent-widget-standalone {
     display: flex;
     align-items: center;
     padding: 5px 10px; /* Reduced padding */
-    border-top: 1px solid #154225; /* Subtler separator */
-    background-color: #0A2E1A; /* Same as header for consistency */
+    border-top: 1px solid var(--current-glass-border-color); /* Use glass border */
+    background-color: rgba(0,0,0,0.05); /* Subtle dark tint for light mode, light for dark */
     gap: 8px; /* Reduced spacing between input area and icon group */
+    border-bottom-left-radius: var(--current-glass-border-radius); /* Match parent radius */
+    border-bottom-right-radius: var(--current-glass-border-radius); /* Match parent radius */
+}
+
+body.night-mode .widget-footer {
+    background-color: rgba(255,255,255,0.05); /* Subtle light tint for dark mode */
 }
 
 .footer-icon {
@@ -230,7 +256,7 @@ body.agent-widget-standalone {
     align-items: center;
     cursor: pointer;
     font-size: 1em; /* Reduced icon font size */
-    color: #D0E0D8;
+    color: var(--current-text); /* Theme text */
     transition: background-color 0.2s ease;
 }
 
@@ -241,27 +267,28 @@ body.agent-widget-standalone {
 .chat-icon,
 .mic-icon,
 .video-toggle-btn {
-    background-color: #154225; /* Darker green for icon backgrounds */
+    background-color: var(--current-button-neutral-bg); /* Use theme neutral button */
 }
 
 .chat-icon:hover,
 .mic-icon:hover,
 .video-toggle-btn:hover {
-    background-color: #1E5330;
+    background-color: var(--current-button-neutral-hover-bg); /* Theme hover */
 }
 
 .mic-icon.active { /* Style for when microphone is active */
-    background-color: #28a745; /* Brighter green */
-    color: #fff;
+    background-color: var(--current-button-bg); /* Theme primary button */
+    color: var(--current-button-text);
 }
 .video-toggle-btn.active { /* Style for when video is active */
-    background-color: #28a745; /* Brighter green */
-    color: #fff;
+    background-color: var(--current-button-bg); /* Theme primary button */
+    color: var(--current-button-text);
 }
 
 
 .text-input-placeholder {
-    color: #608070; /* Muted color for placeholder dots */
+    color: var(--current-text); /* Muted color for placeholder dots */
+    opacity: 0.5;
     font-size: 2em; /* Larger dots */
     letter-spacing: 3px;
     line-height: 1;
@@ -270,8 +297,8 @@ body.agent-widget-standalone {
 }
 
 .end-call-icon {
-    background-color: #CC3333; /* Slightly less harsh red */
-    color: white;
+    background-color: var(--current-button-danger-bg); /* Theme danger */
+    color: var(--current-button-danger-text);
 }
 
 /* Scrollbar Styling */
@@ -279,15 +306,16 @@ body.agent-widget-standalone {
     width: 6px;
 }
 .message-area::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-    border-radius: 3px;
+    background: rgba(0,0,0,0.1); /* Keep subtle */
+    border-radius: calc(var(--current-glass-border-radius) - 10px);
 }
 .message-area::-webkit-scrollbar-thumb {
-    background: #4CAF50; /* Or theme color */
-    border-radius: 3px;
+    background: var(--current-button-bg); /* Theme color */
+    border-radius: calc(var(--current-glass-border-radius) - 10px);
 }
 .message-area::-webkit-scrollbar-thumb:hover {
-    background: #3e8e41; /* Darker on hover */
+    background: var(--current-button-bg); /* Theme hover (can be same or slightly darker if var exists) */
+    opacity: 0.8;
 }
 
 /* Chat Input Area */
@@ -307,8 +335,8 @@ body.agent-widget-standalone {
 }
 
 .send-btn {
-    background-color: #4CAF50; /* Theme color */
-    color: white;
+    background-color: var(--current-button-bg); /* Theme color */
+    color: var(--current-button-text);
     border: none;
     border-radius: 50%; /* Circular button */
     width: 36px; /* Reduced size */
@@ -321,7 +349,8 @@ body.agent-widget-standalone {
     transition: background-color 0.2s ease;
 }
 .send-btn:hover {
-    background-color: #3e8e41; /* Darker on hover */
+    background-color: var(--current-button-bg); /* Theme hover */
+    opacity: 0.8;
 }
 .send-btn i {
     position: relative;
@@ -331,11 +360,12 @@ body.agent-widget-standalone {
 /* Message Styling */
 .message {
     padding: 8px 12px;
-    border-radius: 15px;
+    border-radius: var(--current-glass-border-radius); /* Theme radius for messages */
     max-width: 75%;
     word-wrap: break-word;
     display: flex;
     flex-direction: column; /* Stack text and timestamp */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for messages */
 }
 .message p {
     margin: 0 0 4px 0; /* Space between text and timestamp */
@@ -343,25 +373,27 @@ body.agent-widget-standalone {
 }
 .message .timestamp {
     font-size: 0.7em;
-    color: #80a090; /* Muted timestamp */
+    opacity: 0.7; /* Muted timestamp */
     align-self: flex-end; /* Timestamp to the right */
 }
 
 .user-message {
-    background-color: #4CAF50; /* User message bubble color */
-    color: white;
+    background-color: var(--current-button-bg); /* User message bubble color with theme */
+    color: var(--current-button-text);
     align-self: flex-end; /* Align user messages to the right */
-    border-bottom-right-radius: 5px; /* Chat bubble tail effect */
+    border-bottom-right-radius: calc(var(--current-glass-border-radius) - 10px); /* Chat bubble tail effect */
 }
 .user-message .timestamp {
-    color: #c0e0d0; /* Lighter timestamp for dark bubble */
+    color: var(--current-button-text); /* Lighter timestamp for dark bubble */
+    opacity: 0.8;
 }
 
 .agent-message {
-    background-color: #1E5330; /* Agent message bubble color */
-    color: #D0E0D8;
+    background-color: var(--current-card-bg); /* Agent message bubble color, slightly different */
+    color: var(--current-text);
     align-self: flex-start; /* Align agent messages to the left */
-    border-bottom-left-radius: 5px; /* Chat bubble tail effect */
+    border-bottom-left-radius: calc(var(--current-glass-border-radius) - 10px); /* Chat bubble tail effect */
+    border: 1px solid var(--current-glass-border-color); /* Subtle border for agent messages */
 }
 
 /* --- Product Recommendations Styling --- */
@@ -377,7 +409,8 @@ body.agent-widget-standalone {
 .recommendations-title {
     font-size: 0.9em; /* Slightly smaller than main message text */
     font-weight: 600;
-    color: #c0e0d0; /* Lighter text color, adjust to match widget theme */
+    color: var(--current-text); /* Use theme text color */
+    opacity: 0.9;
     margin-bottom: 12px;
     padding-left: 5px; /* Align with card padding if any */
     text-align: left;
@@ -389,30 +422,33 @@ body.agent-widget-standalone {
     gap: 10px; /* Space between product cards */
 }
 
-.product-card {
+.product-recommendations-block .product-card { /* Scoped to recommendations */
     display: flex;
     align-items: center;
-    background-color: #f8f9fa; /* Light background - white or very light gray */
-    border-radius: 12px; /* Rounded corners */
+    background-color: var(--current-glass-bg); /* Glass background */
+    backdrop-filter: blur(calc(var(--current-glass-blur) - 4px)); /* Slightly less blur if needed */
+    -webkit-backdrop-filter: blur(calc(var(--current-glass-blur) - 4px));
+    border-radius: calc(var(--current-glass-border-radius) - 4px); /* Consistent radius */
     padding: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px var(--current-glass-shadow);
+    border: 1px solid var(--current-glass-border-color);
     transition: box-shadow 0.2s ease-in-out;
 }
 
-.product-card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.product-recommendations-block .product-card:hover {
+    box-shadow: 0 4px 8px var(--current-glass-shadow);
 }
 
-.product-card-image {
+.product-recommendations-block .product-card-image {
     width: 60px; /* Adjust size as needed */
     height: 60px;
-    border-radius: 8px; /* Rounded corners for the image */
+    border-radius: calc(var(--current-glass-border-radius) - 8px); /* Rounded corners for the image */
     object-fit: cover; /* Ensure image covers the area well */
     margin-right: 12px;
-    border: 1px solid #e0e0e0; /* Optional subtle border for image */
+    border: 1px solid var(--current-glass-border-color); /* Optional subtle border for image */
 }
 
-.product-card-details {
+.product-recommendations-block .product-card-details {
     flex-grow: 1; /* Takes up available space */
     display: flex;
     flex-direction: column;
@@ -420,23 +456,24 @@ body.agent-widget-standalone {
     gap: 4px; /* Space between name and price */
 }
 
-.product-card-name {
+.product-recommendations-block .product-card-name {
     font-size: 0.85em;
     font-weight: 600;
-    color: #333; /* Darker text for readability on light background */
+    color: var(--current-text); /* Darker text for readability on light background */
     margin: 0;
     line-height: 1.3;
 }
 
-.product-card-price {
+.product-recommendations-block .product-card-price {
     font-size: 0.8em;
     font-weight: 500;
-    color: #555; /* Slightly lighter than name */
+    color: var(--current-text); /* Slightly lighter than name */
+    opacity: 0.8;
     margin: 0;
 }
 
-.product-card-link {
-    color: #4CAF50; /* Theme green color for the icon */
+.product-recommendations-block .product-card-link {
+    color: var(--current-button-bg); /* Theme green color for the icon */
     font-size: 1.1em; /* Icon size */
     text-decoration: none;
     padding: 8px; /* Clickable area */
@@ -447,8 +484,9 @@ body.agent-widget-standalone {
     transition: color 0.2s ease-in-out;
 }
 
-.product-card-link:hover {
-    color: #3e8e41; /* Darker green on hover */
+.product-recommendations-block .product-card-link:hover {
+    color: var(--current-button-bg); /* Darker green on hover */
+    opacity: 0.7;
 }
 
 /* Ensure product recommendations are not styled like user/agent messages */
@@ -472,9 +510,12 @@ body.agent-widget-standalone {
     position: absolute;
     bottom: 50px; /* Position above the footer icons */
     right: 10px;  /* Align with the right side of the footer */
-    background-color: #154225; /* Darker green, similar to other controls */
-    border-radius: 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+    background-color: var(--current-glass-bg); /* Glass background */
+    backdrop-filter: blur(var(--current-glass-blur));
+    -webkit-backdrop-filter: blur(var(--current-glass-blur));
+    border-radius: var(--current-glass-border-radius); /* Theme radius */
+    box-shadow: 0 -2px 10px var(--current-glass-shadow);
+    border: 1px solid var(--current-glass-border-color);
     padding: 8px;
     display: flex;
     flex-direction: column; /* Stack buttons vertically */
@@ -488,18 +529,18 @@ body.agent-widget-standalone {
     display: flex;
     align-items: center;
     justify-content: flex-start; /* Align icon and text to the left */
-    background-color: #1E5330; /* Slightly lighter green */
-    border-radius: 8px;
+    background-color: var(--current-button-neutral-bg); /* Theme neutral button */
+    border-radius: calc(var(--current-glass-border-radius) - 4px); /* Consistent radius */
     font-size: 0.9em; /* Slightly smaller text */
 }
 
 .image-options-popup button.footer-icon:hover {
-    background-color: #28a745; /* Brighter green on hover */
+    background-color: var(--current-button-neutral-hover-bg); /* Theme hover */
 }
 
 .image-options-popup button.footer-icon .icon-text {
     margin-left: 8px; /* Space between icon and text */
-    color: #D0E0D8;
+    color: var(--current-text); /* Theme text */
 }
 
 .image-options-popup button.footer-icon i {
@@ -530,9 +571,9 @@ body.agent-widget-standalone {
     width: 100%;
     max-width: 400px; /* Limit width on larger screens if widget is scaled */
     height: auto;
-    border-radius: 8px;
+    border-radius: var(--current-glass-border-radius); /* Theme radius */
     margin-bottom: 10px;
-    background-color: #000; /* Black background for video element */
+    background-color: rgba(0,0,0,0.7); /* Darker semi-transparent bg for video feed */
 }
 
 .camera-controls {
@@ -540,20 +581,25 @@ body.agent-widget-standalone {
     gap: 15px;
 }
 
-.camera-controls .capture-btn,
+.camera-controls .capture-btn {
+    background-color: var(--current-button-bg); /* Theme primary */
+    color: var(--current-button-text);
+    /* Inherits .footer-icon styles for size, border-radius will be overridden by general button style in style.css */
+}
 .camera-controls .cancel-camera-btn {
-    background-color: #4CAF50;
-    color: white;
-    /* Inherits .footer-icon styles for size, border-radius, etc. */
+    background-color: var(--current-button-danger-bg); /* Red for cancel */
+    color: var(--current-button-danger-text);
+    /* Inherits .footer-icon styles for size, border-radius will be overridden by general button style in style.css */
 }
 
-.camera-controls .cancel-camera-btn {
-    background-color: #CC3333; /* Red for cancel */
-}
 
-.camera-controls .capture-btn:hover,
-.camera-controls .cancel-camera-btn:hover {
+.camera-controls .capture-btn:hover{
+    background-color: var(--current-button-bg);
     opacity: 0.8;
+}
+.camera-controls .cancel-camera-btn:hover {
+    background-color: var(--current-button-danger-hover-bg);
+    opacity: 0.8; /* Or use theme hover if defined */
 }
 
 /* Ensure .footer-icon.image-options-toggle-btn uses existing styles */

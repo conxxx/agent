@@ -28,6 +28,15 @@
     --checkout-step-inactive-bg-light: #e9ecef;
     --checkout-step-inactive-text-light: #495057;
     --agent-info-text-light: #555;
+
+    /* Glassmorphism Variables - Light */
+    --glass-bg-light: rgba(255, 255, 255, 0.6);
+    --glass-blur-light: 8px; /* Slightly reduced blur for performance if needed */
+    --glass-border-radius-light: 16px; /* Standardized radius */
+    --glass-shadow-light: rgba(0, 0, 0, 0.1);
+    --glass-border-color-light: rgba(255, 255, 255, 0.25);
+
+
     /* New variables for agent launcher and specific buttons - Light */
     --agent-launcher-bg-light: #0A2E1A; /* Dark green */
     --agent-launcher-icon-color-light: #4CAF50; /* Bright green */
@@ -60,6 +69,15 @@
     --checkout-step-inactive-bg-dark: #343a40;
     --checkout-step-inactive-text-dark: #adb5bd;
     --agent-info-text-dark: #bbb;
+
+    /* Glassmorphism Variables - Dark */
+    --glass-bg-dark: rgba(30, 30, 30, 0.6); /* Darker base for night mode */
+    --glass-blur-dark: 8px;
+    --glass-border-radius-dark: 16px;
+    --glass-shadow-dark: rgba(0, 0, 0, 0.2); /* Slightly more visible shadow in dark */
+    --glass-border-color-dark: rgba(255, 255, 255, 0.1);
+
+
     /* New variables for agent launcher and specific buttons - Dark */
     --agent-launcher-bg-dark: #05170E; /* Darker green for dark mode */
     --agent-launcher-icon-color-dark: #66BB6A; /* Lighter green for dark mode */
@@ -92,6 +110,14 @@
     --current-checkout-step-inactive-bg: var(--checkout-step-inactive-bg-light);
     --current-checkout-step-inactive-text: var(--checkout-step-inactive-text-light);
     --current-agent-info-text: var(--agent-info-text-light);
+
+    /* Current Glassmorphism Variables */
+    --current-glass-bg: var(--glass-bg-light);
+    --current-glass-blur: var(--glass-blur-light);
+    --current-glass-border-radius: var(--glass-border-radius-light);
+    --current-glass-shadow: var(--glass-shadow-light);
+    --current-glass-border-color: var(--glass-border-color-light);
+
     /* New current variables defaulting to light */
     --current-agent-launcher-bg: var(--agent-launcher-bg-light);
     --current-agent-launcher-icon-color: var(--agent-launcher-icon-color-light);
@@ -133,6 +159,14 @@ body.night-mode {
     --current-checkout-step-inactive-bg: var(--checkout-step-inactive-bg-dark);
     --current-checkout-step-inactive-text: var(--checkout-step-inactive-text-dark);
     --current-agent-info-text: var(--agent-info-text-dark);
+
+    /* Current Glassmorphism Variables - Night Mode Override */
+    --current-glass-bg: var(--glass-bg-dark);
+    --current-glass-blur: var(--glass-blur-dark);
+    --current-glass-border-radius: var(--glass-border-radius-dark);
+    --current-glass-shadow: var(--glass-shadow-dark);
+    --current-glass-border-color: var(--glass-border-color-dark);
+
     /* New current variable overrides for night mode */
     --current-agent-launcher-bg: var(--agent-launcher-bg-dark);
     --current-agent-launcher-icon-color: var(--agent-launcher-icon-color-dark);
@@ -177,7 +211,7 @@ header div button {
     background-color: var(--current-button-bg);
     color: var(--current-button-text);
     border: none;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     margin-left: 0.5rem;
@@ -202,28 +236,30 @@ main {
 }
 
 .product-card {
-    background-color: var(--current-card-bg);
-    border: 1px solid var(--current-card-border);
-    border-radius: 8px;
+    background-color: var(--current-glass-bg);
+    border: 1px solid var(--current-glass-border-color);
+    border-radius: var(--current-glass-border-radius);
     padding: 1rem;
     text-align: center;
-    box-shadow: 0 2px 5px var(--current-modal-shadow); 
+    box-shadow: 0 4px 6px var(--current-glass-shadow);
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    display: flex; 
-    flex-direction: column; 
-    justify-content: space-between; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    backdrop-filter: blur(var(--current-glass-blur));
+    -webkit-backdrop-filter: blur(var(--current-glass-blur)); /* For Safari */
 }
 
 .product-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 4px 10px var(--current-modal-shadow);
+    box-shadow: 0 6px 12px var(--current-glass-shadow);
 }
 
 .product-card img {
     max-width: 100%;
     height: 150px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: calc(var(--current-glass-border-radius) - 4px); /* Adjusted for consistency */
     margin-bottom: 0.75rem;
 }
 
@@ -264,7 +300,7 @@ body.night-mode .product-card .price {
     color: var(--current-button-text);
     border: none;
     padding: 0.6rem 1.2rem;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     font-size: 0.9rem;
@@ -393,7 +429,7 @@ footer {
     color: var(--current-button-danger-text);
     border: none;
     padding: 0.3rem 0.6rem;
-    border-radius: 4px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     font-size: 0.8rem;
     transition: background-color 0.2s;
@@ -414,7 +450,7 @@ footer {
 .cart-summary button {
     padding: 0.7rem 1.3rem;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     margin-left: 0.5rem;
@@ -431,7 +467,7 @@ footer {
 #clear-cart-btn:hover {
     background-color: var(--current-button-neutral-hover-bg);
 }
-#checkout-btn {
+#checkout-btn { /* This is an old one, ensure new checkout buttons are also updated */
     background-color: var(--current-button-bg);
     color: var(--current-button-text);
 }
@@ -494,7 +530,7 @@ footer {
 }
 .checkout-steps .step {
     padding: 0.5rem 1rem;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     background-color: var(--current-checkout-step-inactive-bg);
     color: var(--current-checkout-step-inactive-text);
     font-size: 0.9rem;
@@ -528,7 +564,7 @@ footer {
     width: 100%;
     padding: 0.6rem;
     border: 1px solid var(--current-input-border);
-    border-radius: 4px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     background-color: var(--current-bg); 
     color: var(--current-text);
     font-size: 0.9rem;
@@ -565,7 +601,7 @@ button.checkout-action-btn {
     background-color: var(--current-button-bg);
     color: var(--current-button-text);
     border: none;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     margin-top: 1.5rem;
     transition: background-color 0.3s, transform 0.2s;
@@ -591,7 +627,7 @@ button.checkout-action-btn.secondary-btn:hover {
     margin-bottom: 1.5rem;
     padding: 0.8rem;
     border: 1px solid var(--current-card-border);
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
 }
 #order-review-section h4 {
     font-size: 1.1rem;
@@ -690,7 +726,7 @@ body > .agent-widget {
     width: 100%;
     max-width: 100%; /* Ensure image is responsive within its column */
     height: auto;
-    border-radius: 8px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     border: 1px solid var(--current-card-border);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
@@ -766,7 +802,7 @@ body.night-mode .product-info-column .price {
     background-color: var(--current-button-bg);
     color: var(--current-button-text);
     border: none;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     text-align: center;
@@ -782,7 +818,7 @@ body.night-mode .product-info-column .price {
 #add-to-cart-feedback {
     font-size: 0.9rem;
     padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     text-align: center;
 }
 
@@ -829,9 +865,32 @@ body.night-mode .product-info-column .price {
     text-align: center;
 }
 
+/* --- Checkout Modal Pop-out Animation --- */
+@keyframes forModalPopIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes forModalPopOut {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+}
+
 /* Phase 1 Checkout Modal Styles - Centered Modal */
 .checkout-modal {
-    display: none; /* Initially hidden */
+    /* display: none; /* JS will control display via style.display */
     position: fixed;
     z-index: 9990; /* High z-index */
     left: 50%;
@@ -841,12 +900,29 @@ body.night-mode .product-info-column .price {
     max-width: 600px; /* Max width for the modal */
     min-width: 300px; /* Min width */
     max-height: 90vh; /* Max height to prevent overflow */
-    background-color: var(--current-modal-bg);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Standard modal shadow */
-    border-radius: 8px; /* Rounded corners for modal */
+    background-color: var(--current-glass-bg); /* Glassmorphism background */
+    box-shadow: 0 8px 32px 0 var(--current-glass-shadow); /* Glassmorphism shadow */
+    backdrop-filter: blur(var(--current-glass-blur));
+    -webkit-backdrop-filter: blur(var(--current-glass-blur)); /* For Safari */
+    border-radius: var(--current-glass-border-radius); /* Rounded corners for modal */
+    border: 1px solid var(--current-glass-border-color); /* Subtle border for glass effect */
     overflow: hidden; /* Main modal overflow hidden, content will scroll */
-    display: flex; /* To make it flex container for content */
+    /* display: flex; /* JS will control display via style.display */
     flex-direction: column; /* Stack header, body, footer vertically */
+    /* Default state is hidden, animation classes will manage appearance */
+    opacity: 0; /* Start fully transparent */
+    transform: translate(-50%, -50%) scale(0.5); /* Start scaled down */
+    display: none; /* Initially hidden by JS */
+}
+
+.checkout-modal.popping-in {
+    display: flex !important; /* Override display:none to show */
+    animation: forModalPopIn 0.3s ease-out forwards;
+}
+
+.checkout-modal.popping-out {
+    display: flex !important; /* Keep display flex during animation */
+    animation: forModalPopOut 0.3s ease-in forwards;
 }
 
 .checkout-modal-content-ph1 { /* This class might be redundant if .checkout-modal is flex */
@@ -903,7 +979,7 @@ body.night-mode .product-info-column .price {
 .checkout-modal-footer-ph1 button {
     margin-left: 10px;
     padding: 10px 15px; /* Adjusted padding */
-    border-radius: 4px; /* Standardized border radius */
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     border: none; /* Removing default border for themed buttons */
     font-weight: bold; /* Ensure text is bold like before */
@@ -961,7 +1037,7 @@ body.night-mode .product-info-column .price {
     width: 60px;
     height: 60px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: calc(var(--current-glass-border-radius) - 8px); /* Adjusted */
     margin-right: 15px;
     border: 1px solid var(--current-card-border);
 }
@@ -1049,7 +1125,7 @@ body.night-mode .product-info-column .price {
     padding: 0.7rem;
     margin-bottom: 0.5rem;
     border: 1px solid var(--current-input-border);
-    border-radius: 4px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     background-color: var(--current-bg);
     color: var(--current-text);
     font-size: 0.95rem;
@@ -1124,7 +1200,7 @@ body.night-mode .product-info-column .price {
     margin-top: 0.3rem;
     margin-bottom: 0.8rem; /* Add some space below each input */
     border: 1px solid var(--current-input-border);
-    border-radius: 4px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     background-color: var(--current-bg);
     color: var(--current-text);
     font-size: 0.9rem;
@@ -1151,7 +1227,7 @@ body.night-mode {
 #new-card-details {
     padding: 1rem;
     border: 1px solid var(--current-card-border);
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     background-color: var(--current-bg-slightly-dimmed, var(--current-bg)); /* Fallback if var not defined */
 }
 
@@ -1276,9 +1352,13 @@ body.night-mode {
     top: 0;
     width: 300px;
     height: 100vh;
-    background-color: var(--current-card-bg);
-    border-right: 1px solid var(--current-card-border);
-    box-shadow: 3px 0px 10px rgba(0,0,0,0.1);
+    background-color: var(--current-glass-bg); /* Glassmorphism background */
+    border-right: 1px solid var(--current-glass-border-color); /* Subtle border for glass effect */
+    box-shadow: 3px 0px 10px var(--current-glass-shadow);
+    backdrop-filter: blur(var(--current-glass-blur));
+    -webkit-backdrop-filter: blur(var(--current-glass-blur)); /* For Safari */
+    border-radius: 0; /* Sidebar typically doesn't have rounded corners on all sides */
+    /* Consider rounding only top-right and bottom-right if desired, but full rect is common */
     z-index: 1000; /* Ensure it's above other content but potentially below modals if any are kept */
     display: flex;
     flex-direction: column;
@@ -1310,7 +1390,7 @@ body.night-mode {
     border: 1px solid var(--current-button-bg);
     color: var(--current-button-bg);
     padding: 5px 10px;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.2s, color 0.2s;
@@ -1354,7 +1434,7 @@ body.night-mode {
 .cart-sidebar-footer button {
     padding: 0.6rem 1rem;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--current-glass-border-radius); /* Updated border-radius */
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     margin-left: 0.5rem;
@@ -1397,14 +1477,127 @@ body header {
 }
 
 /* Ensure the flying item animation style is defined */
+@keyframes flyingItemGlowAndRotate {
+    0% {
+        box-shadow: 0 0 5px var(--current-button-bg), 0 0 10px var(--current-button-bg), 0 0 15px #00ff00, 0 0 20px #00ff00;
+        transform: rotate(0deg) scale(1);
+    }
+    50% {
+        box-shadow: 0 0 10px var(--current-button-bg), 0 0 20px #00ff00, 0 0 25px #00dd00, 0 0 30px #00cc00;
+        transform: rotate(180deg) scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 5px var(--current-button-bg), 0 0 10px var(--current-button-bg), 0 0 15px #00ff00, 0 0 20px #00ff00;
+        transform: rotate(360deg) scale(1);
+    }
+}
+
 .flying-item-animation {
     position: fixed;
     z-index: 1001; /* Above sidebar, below modals if any */
     border-radius: 50%; /* Make it circular or match item shape */
-    box-shadow: 0px 0px 15px rgba(0,0,0,0.5);
-    transition: left 0.7s ease-in-out, top 0.7s cubic-bezier(0.5, -0.5, 0.2, 1.5), width 0.7s ease-in-out, height 0.7s ease-in-out, opacity 0.7s ease-in-out;
-    /* Adjust cubic-bezier for a more pronounced "arc" if desired */
+    /* Initial box-shadow will be set by the animation */
+    transition: left 0.7s ease-in-out, 
+                top 0.7s cubic-bezier(0.5, -0.5, 0.2, 1.5), 
+                width 0.7s ease-in-out, 
+                height 0.7s ease-in-out, 
+                opacity 0.7s ease-in-out;
+    animation: flyingItemGlowAndRotate 0.7s linear infinite; /* Apply rotation and glow */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    /* Optional: Minor glass effect on flying item if desired, but can be distracting */
+    /* background-color: var(--current-glass-bg); */
+    /* backdrop-filter: blur(3px); */
+}
+
+/* Agent Widget Styling */
+/* Assuming .agent-widget is the main container for the agent chat window */
+/* Check if agent_widget.css exists and if .agent-widget is the correct top-level selector */
+.agent-widget {
+    background-color: var(--current-glass-bg);
+    backdrop-filter: blur(var(--current-glass-blur));
+    -webkit-backdrop-filter: blur(var(--current-glass-blur)); /* For Safari */
+    border-radius: var(--current-glass-border-radius);
+    box-shadow: 0 8px 32px 0 var(--current-glass-shadow);
+    border: 1px solid var(--current-glass-border-color);
+    /* Preserve existing layout styles like position, bottom, right, z-index from where it's defined */
+}
+
+/* Agent Launcher Icon - it's a solid button, so glassmorphism doesn't directly apply, but ensure its border-radius is harmonious if needed */
+#agent-launcher-icon {
+    /* If a different border-radius is desired to match the new theme: */
+    /* border-radius: var(--current-glass-border-radius); */ 
+    /* However, 50% for a circle is usually fine. */
+}
+
+/* Input fields general styling - increasing border-radius */
+input[type="text"],
+input[type="email"],
+input[type="password"], /* Add other input types if used */
+textarea,
+select { /* Style select dropdowns too */
+    border-radius: var(--current-glass-border-radius); /* Default for many inputs */
+    padding: 0.6rem; /* Ensure padding is consistent */
+    border: 1px solid var(--current-input-border);
+}
+
+/* Focused input fields to match theme */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--current-button-bg);
+    box-shadow: 0 0 0 2px var(--current-button-bg-transparent); /* Using the transparent variable */
+}
+
+/* General button styling - increasing border-radius */
+button, 
+input[type="button"], 
+input[type="submit"], 
+input[type="reset"] {
+    border-radius: var(--current-glass-border-radius); /* Apply to all buttons */
+    padding: 0.6rem 1.2rem; /* Default padding, can be overridden by specific selectors */
+    border: none; /* Assuming most buttons are borderless, specific ones can override */
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+/* Specific button classes might need their border-radius adjusted if they were more specific than the general 'button' tag */
+/* For example, if a button had 'border-radius: 5px !important', it would override the general one. */
+/* The previous changes already targeted many specific button classes. */
+
+/* --- Selection Animation Styles --- */
+@keyframes subtleSelectedGlow {
+    0% {
+        box-shadow: 0 0 3px var(--current-button-bg-transparent), 0 0 5px var(--current-button-bg);
+    }
+    50% {
+        box-shadow: 0 0 6px var(--current-button-bg-transparent), 0 0 10px var(--current-button-bg);
+    }
+    100% {
+        box-shadow: 0 0 3px var(--current-button-bg-transparent), 0 0 5px var(--current-button-bg);
+    }
+}
+
+.option-selected-visual-cue {
+    animation: subtleSelectedGlow 1.5s ease-in-out infinite;
+    border-radius: var(--current-glass-border-radius); /* Ensure the glow follows the border radius */
+    /* Add a subtle border to make the glow more contained if needed */
+    border: 1px solid var(--current-button-bg-transparent); 
+    padding: 2px; /* Small padding to prevent content shift if border appears */
+    margin: -3px; /* Counteract padding to maintain layout */
+}
+
+/* Apply to the labels containing radio buttons for selection */
+.shipping-method-options label.option-selected-visual-cue,
+#pickup-location-details label.option-selected-visual-cue,
+.payment-method-options label.option-selected-visual-cue,
+#saved-card-details label.option-selected-visual-cue {
+    /* Specificity for labels if they are the target for the animation class */
+    /* The general .option-selected-visual-cue should cover most cases */
+    /* Ensure the label itself has display: block or inline-block if it needs to contain the shadow correctly */
+    display: block; /* Or inline-block, depending on layout */
+    transition: box-shadow 0.3s ease-in-out; /* Smooth transition if animation is removed/added */
 }
