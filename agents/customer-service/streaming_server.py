@@ -220,6 +220,25 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
             # Check for generic ui_command
             # This expects the LLM to output a valid JSON string in part.text
             # if the content is a ui_command.
+            
+            # New handler for direct tool responses that are UI commands
+            direct_ui_command_payload = None
+            if hasattr(server_content, 'parts') and server_content.parts and \
+               hasattr(server_content.parts[0], 'function_response') and \
+               hasattr(server_content.parts[0].function_response, 'response') and \
+               isinstance(server_content.parts[0].function_response.response, dict):
+                
+                tool_response_dict = server_content.parts[0].function_response.response
+                if tool_response_dict.get("action") == "display_ui" and "ui_element" in tool_response_dict and "payload" in tool_response_dict:
+                    direct_ui_command_payload = {
+                        "type": "ui_command", # Standardize the type for client
+                        "command_name": tool_response_dict.get("ui_element"),
+                        "payload": tool_response_dict.get("payload")
+                    }
+                    logger.info(f"[S2C {session_id}] Handling direct 'display_ui' tool response: {direct_ui_command_payload}")
+                    await ws.send_json(direct_ui_command_payload)
+                    continue # Command handled
+
             # ADK Documentation style for content parts (text/audio)
             # This part is reached if the event was not a status update or a handled custom command.
             part: Optional[_PartType] = (
@@ -231,13 +250,13 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                 # logger.debug(f"[S2C DEBUG {session_id}] Event content has no parts or is not structured as expected for text/audio.")
                 continue
 
-            # Check for generic ui_command using the correctly defined 'part'
-            ui_command_details = None
+            # Check for generic ui_command using the correctly defined 'part' (e.g. from LLM text output)
+            ui_command_details_from_text = None
             if part.text: # Ensure part.text exists before trying to load it
                 try:
                     potential_command = json.loads(part.text)
                     if isinstance(potential_command, dict) and potential_command.get("type") == "ui_command":
-                        ui_command_details = potential_command
+                        ui_command_details_from_text = potential_command
                 except json.JSONDecodeError:
                     # Not a JSON command, or malformed JSON.
                     # It will be handled by the subsequent text/audio block.
@@ -246,18 +265,19 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                     # Catch any other unexpected errors during parsing or checking
                     logger.error(f"[S2C {session_id}] Error processing potential ui_command in part.text: {e}", exc_info=True)
 
-            if ui_command_details:
-                if ui_command_details.get("command_name") == "display_shipping_options_ui":
-                    logger.info(f"[S2C {session_id}] Intercepted 'display_shipping_options_ui', sending 'initiate_checkout' to client.")
-                    await ws.send_json({"type": "initiate_checkout"})
+            if ui_command_details_from_text:
+                # This section seems to have specific interception logic, keeping it for now.
+                if ui_command_details_from_text.get("command_name") == "display_shipping_options_ui":
+                    logger.info(f"[S2C {session_id}] Intercepted 'display_shipping_options_ui' from text, sending 'initiate_checkout' to client.")
+                    await ws.send_json({"type": "initiate_checkout"}) # This seems like old logic, might need review
                 else:
-                    logger.info(f"[S2C {session_id}] Handling generic 'ui_command' from part.text: {ui_command_details}")
-                    await ws.send_json(ui_command_details) # Send the original ui_command
+                    logger.info(f"[S2C {session_id}] Handling generic 'ui_command' from part.text: {ui_command_details_from_text}")
+                    await ws.send_json(ui_command_details_from_text) # Send the original ui_command
                 continue # Command handled, move to next agent_event
             
-            # If not a ui_command, proceed to send as text or audio
+            # If not a ui_command from text, proceed to send as text or audio
             message_to_send = None
-            if part.text: # Check for text first (and it wasn't a ui_command)
+            if part.text: # Check for text first (and it wasn't a ui_command from text)
                 message_to_send = {"mime_type": "text/plain", "data": part.text}
                 logger.info(f"[S2C {session_id}] Sending text: {part.text[:50]}...")
             elif part.inline_data and part.inline_data.mime_type == "audio/pcm": # Check for audio/pcm

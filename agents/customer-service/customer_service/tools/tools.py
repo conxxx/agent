@@ -195,8 +195,45 @@ def modify_cart(
         response.raise_for_status()
         modification_status = response.json()
         logger.info("Successfully modified cart for customer %s: %s", customer_id, modification_status)
-        # Add action to signal frontend refresh
+        # Add action to signal frontend refresh and include added item details if applicable
+        added_item_details_for_payload = None
+        # Check if items were intended to be added and the API reported success for additions
+        if items_to_add and modification_status.get("items_added") is True:
+            # Assuming the animation is for the first item added.
+            # The `items_to_add` list contains dicts like {'product_id': '...', 'quantity': ...}
+            first_added_item_info = items_to_add[0]
+            product_id_to_fetch = first_added_item_info.get("product_id")
+
+            if product_id_to_fetch:
+                logger.info(f"Attempting to fetch details for added product ID: {product_id_to_fetch} for refresh_cart payload.")
+                product_api_url = f"{BACKEND_API_BASE_URL}/products/{product_id_to_fetch}"
+                try:
+                    product_response = requests.get(product_api_url, timeout=5)
+                    product_response.raise_for_status()
+                    product_data = product_response.json()
+                    
+                    # Ensure the image_url is correctly formed if needed.
+                    # For now, assuming product_data.get("image_url") is sufficient as per get_product_recommendations
+                    # and the task scope (not fixing 404s here).
+                    image_url = product_data.get("image_url")
+                    
+                    added_item_details_for_payload = {
+                        "product_id": product_data.get("id"), # or product_id_to_fetch
+                        "name": product_data.get("name"),
+                        "image_url": image_url
+                    }
+                    logger.info(f"Successfully fetched details for added item for refresh_cart: {added_item_details_for_payload}")
+                except requests.exceptions.HTTPError as http_err_prod:
+                    logger.error(f"HTTP error fetching product details for {product_id_to_fetch} (for refresh_cart): {http_err_prod} - Response: {product_response.text if 'product_response' in locals() and hasattr(product_response, 'text') else 'N/A'}")
+                except requests.exceptions.RequestException as req_err_prod:
+                    logger.error(f"Request exception fetching product details for {product_id_to_fetch} (for refresh_cart): {req_err_prod}")
+                except json.JSONDecodeError as json_err_prod:
+                    logger.error(f"Failed to decode JSON for product details {product_id_to_fetch} (for refresh_cart): {json_err_prod} - Response: {product_response.text if 'product_response' in locals() and hasattr(product_response, 'text') else 'N/A'}")
+        
         return_value = {"action": "refresh_cart", **modification_status}
+        if added_item_details_for_payload:
+            return_value["added_item"] = added_item_details_for_payload
+        
         logger.info(f"modify_cart returning: {return_value}")
         return return_value
     except requests.exceptions.HTTPError as http_err:
@@ -616,19 +653,50 @@ def display_pickup_locations_ui(static_locations: list) -> dict:
     }
 
 
-def display_payment_methods_ui() -> dict:
-    """
-    Displays the payment methods UI for checkout.
+def display_payment_methods_ui(customer_id: str) -> dict:
+    """Displays a UI for selecting payment methods, including mocked saved methods.
+
+    Args:
+        customer_id (str): The ID of the customer. Though not used for API calls
+                           in this mocked version, it's included for future integration.
 
     Returns:
-        dict: A dictionary to display the payment methods UI.
+        A dictionary representing the UI elements for payment method selection.
     """
-    logger.info("Displaying payment methods UI")
-    return {
-        "action": "display_ui",
-        "ui_element": "payment_methods",
-        "payload": {"methods": ["Credit Card", "PayPal", "Google Pay"]},
+    logger.info(f"Displaying payment methods UI for customer_id: {customer_id}.")
+
+    mock_saved_methods = [
+        {"type": "saved", "display_name": "Visa ending in 1234", "id": "mock_saved_card_1"},
+        {"type": "saved", "display_name": "Mastercard ending in 5678", "id": "mock_saved_card_2"},
+    ]
+
+    generic_methods = [
+        {"type": "new", "display_name": "Add New Credit/Debit Card"},
+        {"type": "other", "display_name": "PayPal"},
+        {"type": "other", "display_name": "Google Pay"}
+    ]
+
+    all_methods = mock_saved_methods + generic_methods
+    
+    # The original tool returned an "action" and "ui_element",
+    # keeping a similar structure for the payload.
+    # The main "ui_type" for the agent/UI to interpret will be "payment_selection"
+    # as per the architect's plan for the payload structure.
+    payload_to_agent = {
+        "ui_type": "payment_selection", # Key for UI interpretation
+        "methods": all_methods,
     }
+
+    # The tool itself, when called by the agent, might still be expected to return
+    # the "action": "display_ui" structure if other similar UI tools do.
+    # We will embed the architect's planned payload within this.
+    tool_return_value = {
+        "action": "display_ui",
+        "ui_element": "payment_methods", # Matches original structure
+        "payload": payload_to_agent
+    }
+    logger.info(f"Payment methods tool_return_value for customer_id {customer_id}: {tool_return_value}")
+    return tool_return_value
 
 
 def display_order_confirmation_ui(order_details: dict) -> dict:

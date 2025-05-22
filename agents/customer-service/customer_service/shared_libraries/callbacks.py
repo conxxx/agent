@@ -84,6 +84,18 @@ def rate_limit_callback(
     else:
         callback_context.state["request_count"] = request_count
 
+    # Check for a pending UI command and set it in the current turn's state_delta
+    if 'current_ui_command_for_frontend' in callback_context.state:
+        ui_command = callback_context.state.pop('current_ui_command_for_frontend')
+        if hasattr(callback_context, 'invocation_context') and \
+           hasattr(callback_context.invocation_context, 'actions'):
+            logger.info(f"Moving UI command to invocation_context.actions.state_delta: {ui_command}")
+            callback_context.invocation_context.actions.state_delta = ui_command
+        else:
+            logger.warning("Could not set UI command in state_delta: invocation_context or actions not found.")
+            # Optionally, put it back if it couldn't be set, though this might cause loops if not handled.
+            # callback_context.state['current_ui_command_for_frontend'] = ui_command
+
     return
 
 
@@ -233,7 +245,22 @@ def after_tool(
             logger.info(f"Tool 'approve_discount' status not 'ok' or unknown. Response: {tool_response}")
     
     logger.debug(f"after_tool for {tool.name} completed.")
-    return None
+
+    # If the tool response is intended for UI display,
+    # store it in the session state. The ADK should pick this up for state_delta.
+    if isinstance(tool_response, dict) and tool_response.get("action") == "display_ui":
+        logger.info(f"Storing UI command in state: {tool_response}")
+        tool_context.state['current_ui_command_for_frontend'] = tool_response
+        # It's also good practice to ensure other parts of the state that might
+        # conflict or become stale are cleared if this UI command should be the sole focus.
+        # For example, if 'customer_profile' was just a default or fallback:
+        # if 'customer_profile' in tool_context.state:
+        #     del tool_context.state['customer_profile'] # Example: remove if it's not needed with UI command
+        return None # Signal that the tool's effect is a state change
+
+    # For other tools that might return data for the LLM, pass it through.
+    # If a non-UI tool also modifies state, that's fine, ADK handles state changes.
+    return tool_response
 
 # checking that the customer profile is loaded as state.
 def before_agent(callback_context: InvocationContext):

@@ -351,8 +351,15 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
                 currentAgentMessageElement = null; return;
             }
             if (parsedData.type === "command" && parsedData.command_name === "refresh_cart") {
-                console.log(`[WSInternal] Received 'refresh_cart'.`);
-                window.parent.postMessage({ "type": "REFRESH_CART_DISPLAY" }, 'http://localhost:5000');
+                console.log(`[WSInternal] Received 'refresh_cart'. Payload:`, parsedData.payload);
+                let messageToParent = { "type": "REFRESH_CART_DISPLAY" };
+                if (parsedData.payload && parsedData.payload.added_item) { // Assuming payload contains added_item from server
+                    messageToParent.added_item_details = parsedData.payload.added_item;
+                    console.log(`[WSInternal] Attaching added_item_details to REFRESH_CART_DISPLAY message:`, parsedData.payload.added_item);
+                } else {
+                    console.log(`[WSInternal] No added_item_details in refresh_cart payload.`);
+                }
+                window.parent.postMessage(messageToParent, 'http://localhost:5000');
                 currentAgentMessageElement = null; return;
             }
             if (parsedData.type === "product_recommendations" && parsedData.payload) {

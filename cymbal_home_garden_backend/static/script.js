@@ -4,15 +4,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const recommendedProductsGrid = document.getElementById('recommended-products-grid');
     const currentCustomerIdSpan = document.getElementById('current-customer-id'); 
 
-    // Cart DOM Elements
-    const cartModal = document.getElementById('cart-modal');
-    const cartToggleBtn = document.getElementById('cart-toggle');
-    const closeCartBtn = cartModal.querySelector('.close-button');
-    const cartItemsContainer = document.getElementById('cart-items-container');
-    const cartSubtotalEl = document.getElementById('cart-subtotal');
-    const cartCountEl = document.getElementById('cart-count');
-    const clearCartBtn = document.getElementById('clear-cart-btn');
-    const cartCheckoutBtn = document.getElementById('checkout-btn');
+    // Cart DOM Elements (Old Modal - some might be repurposed or removed)
+    // const cartModal = document.getElementById('cart-modal'); // Commented out, modal removed
+    // const cartToggleBtn = document.getElementById('cart-toggle'); // Commented out, header button removed
+    // const closeCartBtn = cartModal.querySelector('.close-button'); // Commented out
+    // const cartItemsContainer = document.getElementById('cart-items-container'); // Old modal items container
+    // const cartSubtotalEl = document.getElementById('cart-subtotal'); // Old modal subtotal
+    // const cartCountEl = document.getElementById('cart-count'); // Old modal count
+
+    // New Left Sidebar Cart DOM Elements
+    const leftSidebarCart = document.getElementById('left-sidebar-cart');
+    const cartSidebarToggleBtn = document.getElementById('cart-sidebar-toggle-btn');
+    const cartSidebarItemsContainer = document.getElementById('cart-sidebar-items-container');
+    const cartSidebarSubtotalEl = document.getElementById('cart-sidebar-subtotal');
+    const cartSidebarItemCountEl = document.getElementById('cart-sidebar-item-count');
+    const clearCartSidebarBtn = document.getElementById('cart-sidebar-clear-btn');
+    const cartSidebarCheckoutBtn = document.getElementById('cart-sidebar-checkout-btn');
+    
+    console.log("[Cart Init] Sidebar cart elements:", { leftSidebarCart, cartSidebarToggleBtn, cartSidebarItemsContainer, cartSidebarSubtotalEl, cartSidebarItemCountEl, clearCartSidebarBtn, cartSidebarCheckoutBtn });
 
     // Checkout Modal (Sidebar) DOM Elements
     const checkoutModalPh1 = document.getElementById('checkout-modal-ph1');
@@ -49,6 +58,35 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     console.log("[Checkout] Initial checkoutProcessState:", JSON.parse(JSON.stringify(checkoutProcessState)));
 
+    // --- Left Sidebar Cart Logic ---
+    function toggleCartSidebar() {
+        if (!leftSidebarCart) {
+            console.error("[Cart Sidebar] Sidebar element not found for toggle.");
+            return;
+        }
+        const isCollapsed = leftSidebarCart.classList.toggle('collapsed');
+        document.body.classList.toggle('cart-sidebar-expanded', !isCollapsed);
+        console.log(`[Cart Sidebar] Toggled. Now ${isCollapsed ? 'collapsed' : 'expanded'}. Body class 'cart-sidebar-expanded' is ${!isCollapsed}.`);
+        if (cartSidebarToggleBtn) {
+            cartSidebarToggleBtn.innerHTML = isCollapsed ? '>' : '<'; // Update button text/icon
+        }
+    }
+
+    if (cartSidebarToggleBtn) {
+        console.log("[Cart Init] Adding click listener to sidebar toggle button.");
+        cartSidebarToggleBtn.addEventListener('click', toggleCartSidebar);
+    } else {
+        console.warn("[Cart Init] Sidebar toggle button not found.");
+    }
+    
+    // Ensure sidebar is expanded by default if not explicitly collapsed by a class on load
+    if (leftSidebarCart && !leftSidebarCart.classList.contains('collapsed')) {
+        document.body.classList.add('cart-sidebar-expanded');
+        console.log("[Cart Init] Sidebar initially expanded. Added 'cart-sidebar-expanded' to body.");
+         if (cartSidebarToggleBtn) cartSidebarToggleBtn.innerHTML = '<';
+    }
+
+
     // --- Night Mode ---
     const THEME_STORAGE_KEY = 'websiteTheme';
     function applyTheme(theme) {
@@ -79,14 +117,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Cart Modal ---
-    function openCartModal() { if(cartModal) cartModal.classList.add('show'); }
-    function closeCartModal() { if(cartModal) cartModal.classList.remove('show'); }
-    if(cartToggleBtn) cartToggleBtn.addEventListener('click', openCartModal);
-    if(closeCartBtn) closeCartBtn.addEventListener('click', closeCartModal);
-    window.addEventListener('click', (event) => {
-        if (event.target === cartModal) closeCartModal();
-    });
+    // --- Cart Modal (Old - To be removed or commented out) ---
+    // function openCartModal() { if(cartModal) cartModal.classList.add('show'); }
+    // function closeCartModal() { if(cartModal) cartModal.classList.remove('show'); }
+    // if(cartToggleBtn) cartToggleBtn.addEventListener('click', openCartModal);
+    // if(closeCartBtn) closeCartBtn.addEventListener('click', closeCartModal);
+    // window.addEventListener('click', (event) => {
+    //     if (event.target === cartModal) closeCartModal();
+    // });
 
     // --- API Helper ---
     async function fetchAPI(url, options = {}) {
@@ -115,37 +153,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Cart Logic (Backend Integrated) ---
     async function fetchCart() {
+        console.log("[Cart] Fetching cart data...");
         try {
             const data = await fetchAPI(`/api/cart/${DEFAULT_CUSTOMER_ID}`);
+            console.log("[Cart] Cart data received:", data);
             currentCartItemsData = data.items || [];
             currentCartItemIds = currentCartItemsData.map(item => item.product_id);
-            renderCartItems(currentCartItemsData);
-            calculateSubtotal(currentCartItemsData);
-            updateCartCount(currentCartItemsData);
+            renderCartItems(currentCartItemsData); // Will now render to sidebar
+            calculateSubtotal(currentCartItemsData); // Will now update sidebar subtotal
+            updateCartCount(currentCartItemsData); // Will now update sidebar count
             displayRecommendedProducts();
         } catch (error) {
-            if(cartItemsContainer) cartItemsContainer.innerHTML = '<p>Error loading cart. Please try again.</p>';
+            console.error("[Cart] Error fetching cart:", error);
+            if(cartSidebarItemsContainer) cartSidebarItemsContainer.innerHTML = '<p>Error loading cart. Please try again.</p>';
         }
     }
 
-    async function addToCart(productId) {
+    // New animation function
+    function animateItemToCart(sourceElementRect, targetElementRect, imageUrl) {
+        console.log(`[Animation] Starting fly-to-cart. Source:`, sourceElementRect, `Target:`, targetElementRect, `Image: ${imageUrl}`);
+        if (!imageUrl || !sourceElementRect || !targetElementRect) {
+            console.error("[Animation] Missing data for animation:", {imageUrl, sourceElementRect, targetElementRect});
+            return;
+        }
+
+        const flyingImage = document.createElement('div');
+        flyingImage.classList.add('flying-item-animation'); // Use class from style.css
+        flyingImage.style.backgroundImage = `url(${imageUrl})`;
+        
+        // Initial position and size (near source element, e.g., agent widget)
+        const initialSize = 50; // px
+        flyingImage.style.left = `${sourceElementRect.left + (sourceElementRect.width / 2) - (initialSize / 2)}px`;
+        flyingImage.style.top = `${sourceElementRect.top + (sourceElementRect.height / 2) - (initialSize / 2)}px`;
+        flyingImage.style.width = `${initialSize}px`;
+        flyingImage.style.height = `${initialSize}px`;
+        flyingImage.style.opacity = '1';
+        
+        document.body.appendChild(flyingImage);
+        console.log("[Animation] Flying image appended to body:", flyingImage);
+
+        // Target position and size (near cart sidebar icon or a specific point in sidebar)
+        const finalSize = 20; // px, smaller as it "enters" the cart
+        const targetX = targetElementRect.left + (targetElementRect.width / 4); // Adjust to target a specific part of the sidebar
+        const targetY = targetElementRect.top + (targetElementRect.height / 4);
+
+        // Force reflow to apply initial styles before transition
+        void flyingImage.offsetWidth;
+
+        // Apply target styles to trigger CSS transition
+        flyingImage.style.left = `${targetX}px`;
+        flyingImage.style.top = `${targetY}px`;
+        flyingImage.style.width = `${finalSize}px`;
+        flyingImage.style.height = `${finalSize}px`;
+        flyingImage.style.opacity = '0';
+        // transform: scale(0.1) could also be used if preferred over width/height transition for shrinking
+
+        flyingImage.addEventListener('transitionend', () => {
+            console.log("[Animation] Fly-to-cart animation ended. Removing element.");
+            flyingImage.remove();
+        }, { once: true });
+    }
+
+    async function addToCart(productId, event) { // event parameter might be null if called by agent
+        console.log(`[Product Card Add] Adding product ${productId} to cart. NO ANIMATION from product card click.`);
+        // Animation logic for product card clicks is REMOVED as per plan.
+        // The 'event' parameter is kept for now, but its usage for animation is removed.
+
         try {
             await fetchAPI(`/api/cart/${DEFAULT_CUSTOMER_ID}/item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ product_id: productId, quantity: 1 })
             });
-            await fetchCart(); 
-            openCartModal();
-        } catch (error) { /* Handled by fetchAPI */ }
+            await fetchCart(); // Fetches cart and updates sidebar display
+
+            // Ensure sidebar is visible if it was collapsed
+            if (leftSidebarCart && leftSidebarCart.classList.contains('collapsed')) {
+                console.log("[Cart] Sidebar was collapsed, expanding it after item add.");
+                toggleCartSidebar(); // Use the new toggle function
+            }
+        } catch (error) {
+            console.error(`[Product Card Add] Error adding product ${productId}:`, error);
+            // fetchAPI handles user-facing alerts
+        }
     }
 
     function renderCartItems(items) {
-        if (!cartItemsContainer) return;
+        // Now targets the sidebar's item container
+        if (!cartSidebarItemsContainer) {
+            console.error("[Cart Render] Sidebar cart items container not found.");
+            return;
+        }
+        console.log("[Cart Render] Rendering items in sidebar:", items);
         if (!items || items.length === 0) {
-            cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+            cartSidebarItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
         } else {
-            cartItemsContainer.innerHTML = '';
+            cartSidebarItemsContainer.innerHTML = '';
             items.forEach(item => {
                 const itemEl = document.createElement('div');
                 itemEl.classList.add('cart-item');
@@ -158,38 +261,63 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="cart-item-actions">
                         <button class="remove-from-cart-btn" data-product-id="${item.product_id}">&times;</button>
                     </div>`;
-                cartItemsContainer.appendChild(itemEl);
+                cartSidebarItemsContainer.appendChild(itemEl);
             });
-            cartItemsContainer.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+            cartSidebarItemsContainer.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => removeProductFromCart(e.target.dataset.productId));
             });
         }
     }
 
     function updateCartCount(items) {
-        if(!cartCountEl) return;
-        cartCountEl.textContent = items.reduce((sum, item) => sum + item.quantity, 0);
+        // Now targets the sidebar's count element
+        if(!cartSidebarItemCountEl) {
+            console.warn("[Cart Count] Sidebar item count element not found.");
+            return;
+        }
+        const count = items.reduce((sum, item) => sum + item.quantity, 0);
+        cartSidebarItemCountEl.textContent = count;
+        console.log(`[Cart Count] Updated sidebar cart count to: ${count}`);
     }
 
     function calculateSubtotal(items) {
-        if(!cartSubtotalEl) return;
-        cartSubtotalEl.textContent = items.reduce((sum, item) => sum + ((item.price_per_unit || 0) * item.quantity), 0).toFixed(2);
+        // Now targets the sidebar's subtotal element
+        if(!cartSidebarSubtotalEl) {
+            console.warn("[Cart Subtotal] Sidebar subtotal element not found.");
+            return;
+        }
+        const subtotal = items.reduce((sum, item) => sum + ((item.price_per_unit || 0) * item.quantity), 0).toFixed(2);
+        cartSidebarSubtotalEl.textContent = subtotal;
+        console.log(`[Cart Subtotal] Updated sidebar subtotal to: $${subtotal}`);
     }
 
     async function removeProductFromCart(productId) {
+        console.log(`[Cart] Removing product ${productId} from cart.`);
         try {
             await fetchAPI(`/api/cart/${DEFAULT_CUSTOMER_ID}/item/${productId}`, { method: 'DELETE' });
             await fetchCart();
-        } catch (error) { /* Handled by fetchAPI */ }
+        } catch (error) {
+            console.error(`[Cart] Error removing product ${productId}:`, error);
+            /* Handled by fetchAPI */
+        }
     }
 
     async function clearCart() {
+        console.log("[Cart] Clearing all items from cart.");
         try {
             await fetchAPI(`/api/cart/${DEFAULT_CUSTOMER_ID}/clear`, { method: 'DELETE' });
             await fetchCart();
-        } catch (error) { console.error("[Checkout] Error during clearCart:", error); }
+        } catch (error) {
+            console.error("[Cart] Error clearing cart:", error);
+        }
     }
-    if(clearCartBtn) clearCartBtn.addEventListener('click', clearCart);
+    // Update to use the new sidebar clear button
+    if(clearCartSidebarBtn) {
+        console.log("[Cart Init] Adding click listener to sidebar clear cart button.");
+        clearCartSidebarBtn.addEventListener('click', clearCart);
+    } else {
+        console.warn("[Cart Init] Sidebar clear cart button not found.");
+    }
 
     // --- Product Display & Recommendations ---
     async function fetchInitialProducts() {
@@ -252,7 +380,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="description">${descSnippet}</p>
             <button class="add-to-cart-btn" data-product-id="${product.id}">Add to Cart</button>`;
         container.appendChild(card);
-        card.querySelector('.add-to-cart-btn').addEventListener('click', (event) => addToCart(event.target.dataset.productId));
+        // Pass the event to addToCart
+        card.querySelector('.add-to-cart-btn').addEventListener('click', (event) => addToCart(event.target.dataset.productId, event));
     }
 
     // Initial Load
@@ -280,21 +409,44 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`[Main Page] Received SET_WEBSITE_THEME from widget with theme: ${newTheme}`);
             applyTheme(newTheme);
         } else if (event.data.type === "REFRESH_CART_DISPLAY") { 
-            console.log("[Main Page] Received REFRESH_CART_DISPLAY from widget.");
-            fetchCart();
-        } else if (event.data.type === "display_ui_component" && event.data.ui_element) {
-            console.log(`[Main Page] Received 'display_ui_component' for element: ${event.data.ui_element}`, "Payload:", event.data.payload);
-            handleDisplayUiComponent(event.data.ui_element, event.data.payload);
+            console.log("[Main Page] Received REFRESH_CART_DISPLAY from widget. Data:", event.data);
+            fetchCart(); // This will update the sidebar cart display
+
+            if (event.data.added_item_details && event.data.added_item_details.image_url) {
+                console.log("[Main Page] Item added via agent, attempting animation. Details:", event.data.added_item_details);
+                const agentWidgetElement = document.querySelector('.agent-widget'); // Standard selector for agent widget
+                const sidebarCartElement = document.getElementById('left-sidebar-cart');
+
+                if (agentWidgetElement && sidebarCartElement) {
+                    const sourceRect = agentWidgetElement.getBoundingClientRect();
+                    const targetRect = sidebarCartElement.getBoundingClientRect(); // Or a specific element within the sidebar
+                    
+                    // Ensure sidebar is visible for animation target
+                    if (leftSidebarCart && leftSidebarCart.classList.contains('collapsed')) {
+                        console.log("[Animation] Sidebar was collapsed, expanding it for animation target.");
+                        toggleCartSidebar();
+                    }
+                    
+                    animateItemToCart(sourceRect, targetRect, event.data.added_item_details.image_url);
+                } else {
+                    console.error("[Animation] Could not find agent widget or sidebar cart element for animation.", {agentWidgetElement, sidebarCartElement});
+                }
+            } else {
+                console.log("[Main Page] REFRESH_CART_DISPLAY received, but no added_item_details with image_url for animation.");
+            }
+        } else if (event.data.type === "ui_command" && event.data.command_name) { // Changed to match agent_widget.js
+            console.log(`[Main Page] Received 'ui_command' for command: ${event.data.command_name}`, "Payload:", event.data.payload);
+            handleDisplayUiComponent(event.data.command_name, event.data.payload); // Pass command_name as uiElement
         } else {
             console.log("[Main Page] Received message not handled by current logic:", event.data);
         }
     });
 
-    function handleDisplayUiComponent(uiElement, payload) {
-        console.log(`[Checkout] handleDisplayUiComponent called with uiElement: ${uiElement}, payload:`, payload);
+    function handleDisplayUiComponent(uiElement, payload) { // uiElement here is actually command_name
+        console.log(`[Checkout] handleDisplayUiComponent called with command_name (as uiElement): ${uiElement}, payload:`, payload);
         showCheckoutModalPh1(); 
 
-        switch (uiElement) {
+        switch (uiElement) { // uiElement here is actually command_name
             case "checkout_item_selection":
                 renderCheckoutStep1ItemSelection(payload && payload.items ? payload.items : currentCartItemsData);
                 break;
@@ -321,21 +473,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // --- Checkout Sidebar Logic ---
-    if(cartCheckoutBtn) {
-        // cartCheckoutBtn.removeEventListener('click', openCheckoutModal_OLD); // Not needed if openCheckoutModal_OLD is fully removed
-        cartCheckoutBtn.addEventListener('click', () => {
-            console.log("[Cart] Main checkout button clicked, initiating checkout flow.");
+    // --- Checkout Sidebar Logic (triggered from new sidebar checkout button) ---
+    if(cartSidebarCheckoutBtn) {
+        console.log("[Cart Init] Adding click listener to sidebar checkout button.");
+        cartSidebarCheckoutBtn.addEventListener('click', () => {
+            console.log("[Cart Sidebar] Checkout button clicked, initiating checkout flow.");
+            // Reset checkout state (same as before, just ensuring it's logged for the new button)
             checkoutProcessState = {
                 currentStep: 'items', selectedItems: [],
                 shippingInfo: { method: null, address: { name: '', street: '', city: '', postalCode: '', country: '' }, pickupLocation: null, previousPickupLocations: [] },
                 paymentInfo: { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] },
                 orderTotal: 0
             };
-            console.log("[Checkout] State initialized for new user-initiated checkout flow:", JSON.parse(JSON.stringify(checkoutProcessState)));
-            showCheckoutModalPh1(); 
-            renderCheckoutStep1ItemSelection(); 
+            console.log("[Checkout] State initialized for new checkout flow from sidebar:", JSON.parse(JSON.stringify(checkoutProcessState)));
+            showCheckoutModalPh1(); // This is the existing checkout modal, not a new sidebar for checkout
+            renderCheckoutStep1ItemSelection();
         });
+    } else {
+        console.warn("[Cart Init] Sidebar checkout button not found.");
     }
 
     function showCheckoutModalPh1() {

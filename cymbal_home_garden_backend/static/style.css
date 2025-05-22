@@ -286,9 +286,10 @@ footer {
     border-top: 2px solid var(--current-button-bg); 
 }
 
-/* Modal Base Styles (Shared by Cart and Checkout) */
+/* Modal Base Styles (Shared by Cart and Checkout) - Old Cart Modal Styles Commented Out */
+/*
 .modal {
-    display: none; 
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -296,11 +297,11 @@ footer {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.6); 
+    background-color: rgba(0,0,0,0.6);
 }
 
 .modal.show {
-    display: flex; 
+    display: flex;
     align-items: center;
     justify-content: center;
 }
@@ -310,11 +311,11 @@ footer {
     color: var(--current-text);
     margin: auto;
     padding: 25px;
-    border: 1px solid var(--current-card-border); 
+    border: 1px solid var(--current-card-border);
     border-radius: 10px;
     width: 90%;
-    box-shadow: 0 5px 20px var(--current-modal-shadow); 
-    position: relative; 
+    box-shadow: 0 5px 20px var(--current-modal-shadow);
+    position: relative;
     animation: fadeInModal 0.3s ease-out;
 }
 
@@ -325,13 +326,13 @@ footer {
 
 .close-button {
     color: var(--current-text);
-    float: right; 
+    float: right;
     font-size: 28px;
     font-weight: bold;
-    position: absolute; 
+    position: absolute;
     top: 10px;
     right: 20px;
-    line-height: 1; 
+    line-height: 1;
 }
 
 .close-button:hover,
@@ -340,8 +341,10 @@ footer {
     text-decoration: none;
     cursor: pointer;
 }
+*/
 
-/* Cart Modal Specifics */
+/* Cart Modal Specifics - Old Cart Modal Styles Commented Out */
+/*
 #cart-modal .modal-content {
     max-width: 600px;
 }
@@ -360,7 +363,7 @@ footer {
     justify-content: space-between;
     align-items: center;
     padding: 0.8rem 0.5rem;
-    border-bottom: 1px dashed var(--current-card-border); 
+    border-bottom: 1px dashed var(--current-card-border);
 }
 .cart-item:last-child {
     border-bottom: none;
@@ -378,7 +381,7 @@ footer {
     font-size: 0.9rem;
     opacity: 0.8;
 }
-.cart-item-details .product-id-display { /* Product ID in cart */
+.cart-item-details .product-id-display {
     font-size: 0.7rem;
     opacity: 0.6;
     margin-top: 0.2rem;
@@ -428,13 +431,14 @@ footer {
 #clear-cart-btn:hover {
     background-color: var(--current-button-neutral-hover-bg);
 }
-#checkout-btn { 
-    background-color: var(--current-button-bg); 
+#checkout-btn {
+    background-color: var(--current-button-bg);
     color: var(--current-button-text);
 }
 #checkout-btn:hover {
     opacity: 0.85;
 }
+*/
 
 /* Recommendations Section */
 #recommendations-section {
@@ -825,23 +829,27 @@ body.night-mode .product-info-column .price {
     text-align: center;
 }
 
-/* Phase 1 Checkout Modal Styles - Transformed to Sidebar */
+/* Phase 1 Checkout Modal Styles - Centered Modal */
 .checkout-modal {
     display: none; /* Initially hidden */
     position: fixed;
-    z-index: 9990; /* Below agent widget, above most other things */
-    right: 0;
-    top: 0;
-    width: 40%; /* Sidebar width */
-    max-width: 480px; /* Max width for the sidebar */
-    min-width: 320px; /* Min width */
-    height: 100vh;
-    background-color: var(--current-modal-bg); /* Solid background for the sidebar, uses theme variable */
-    box-shadow: -3px 0px 10px rgba(0, 0, 0, 0.15); /* Shadow on the left edge */
-    overflow-y: hidden; /* Content will handle its own scrolling */
+    z-index: 9990; /* High z-index */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%; /* Responsive width */
+    max-width: 600px; /* Max width for the modal */
+    min-width: 300px; /* Min width */
+    max-height: 90vh; /* Max height to prevent overflow */
+    background-color: var(--current-modal-bg);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Standard modal shadow */
+    border-radius: 8px; /* Rounded corners for modal */
+    overflow: hidden; /* Main modal overflow hidden, content will scroll */
+    display: flex; /* To make it flex container for content */
+    flex-direction: column; /* Stack header, body, footer vertically */
 }
 
-.checkout-modal-content-ph1 {
+.checkout-modal-content-ph1 { /* This class might be redundant if .checkout-modal is flex */
     width: 100%;
     height: 100%;
     display: flex;
@@ -1257,4 +1265,146 @@ body.night-mode {
 
 .order-confirmation-content strong {
     color: var(--accent-color); /* Or a specific highlight color */
+}
+
+/* Add to Cart Animation */
+/* .item-flying-to-cart class removed as it was redundant. .flying-item-animation is used. */
+/* New Left Sidebar Cart Styles */
+.cart-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 300px;
+    height: 100vh;
+    background-color: var(--current-card-bg);
+    border-right: 1px solid var(--current-card-border);
+    box-shadow: 3px 0px 10px rgba(0,0,0,0.1);
+    z-index: 1000; /* Ensure it's above other content but potentially below modals if any are kept */
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    transform: translateX(0);
+    transition: transform 0.3s ease-in-out;
+}
+
+.cart-sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+.cart-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--current-card-border);
+}
+
+.cart-sidebar-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.cart-sidebar-toggle {
+    background: none;
+    border: 1px solid var(--current-button-bg);
+    color: var(--current-button-bg);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.cart-sidebar-toggle:hover {
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+}
+
+/* Ensure this targets the new sidebar's cart items container */
+#cart-sidebar-items-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+/* Re-style .cart-item for the sidebar if needed, or ensure existing styles are compatible */
+/* The existing .cart-item styles (lines 358-385) might be largely reusable. */
+/* We'll assume they are for now, and adjust if testing shows issues. */
+/* Specifically, ensure product ID display within cart items is still good. */
+.cart-sidebar .cart-item .product-id-display { /* If more specific styling is needed */
+    font-size: 0.65rem;
+    opacity: 0.5;
+}
+
+
+.cart-sidebar-footer {
+    padding-top: 10px;
+    border-top: 1px solid var(--current-card-border);
+    text-align: right;
+}
+
+.cart-sidebar-footer p {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.cart-sidebar-footer button {
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-left: 0.5rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+.cart-sidebar-footer button:hover {
+    transform: translateY(-1px);
+}
+
+/* Style specific buttons in sidebar footer */
+#cart-sidebar-clear-btn {
+    background-color: var(--current-button-neutral-bg);
+    color: var(--current-button-neutral-text);
+}
+#cart-sidebar-clear-btn:hover {
+    background-color: var(--current-button-neutral-hover-bg);
+}
+
+#cart-sidebar-checkout-btn {
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+}
+#cart-sidebar-checkout-btn:hover {
+    opacity: 0.85;
+}
+
+
+/* Main Content Area Adjustment */
+body.cart-sidebar-expanded main,
+body.cart-sidebar-expanded header {
+    margin-left: 300px; /* Should match .cart-sidebar width */
+    transition: margin-left 0.3s ease-in-out;
+}
+
+body main, 
+body header {
+    margin-left: 0; /* Default state */
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Ensure the flying item animation style is defined */
+.flying-item-animation {
+    position: fixed;
+    z-index: 1001; /* Above sidebar, below modals if any */
+    border-radius: 50%; /* Make it circular or match item shape */
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.5);
+    transition: left 0.7s ease-in-out, top 0.7s cubic-bezier(0.5, -0.5, 0.2, 1.5), width 0.7s ease-in-out, height 0.7s ease-in-out, opacity 0.7s ease-in-out;
+    /* Adjust cubic-bezier for a more pronounced "arc" if desired */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
