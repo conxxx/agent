@@ -94,9 +94,19 @@ When the customer expresses a desire to checkout (e.g., "I want to checkout," "l
 
 4.  **Handle Shipping Choice:**
     *   **If user chooses "home delivery":**
-        *   Respond: "Home delivery it is. Please fill in your address details in the checkout area."
+        *   Access the customer's profile information (available via the `GLOBAL_INSTRUCTION`).
+        *   Let `customer_address` be the address from the profile (e.g., `profile.shipping_address`).
+        *   **If a complete `customer_address` (e.g., street, city, postal_code, country are present) exists in the profile:**
+            *   Respond: "Home delivery it is. I see we have an address on file for you: [Street, City, Postal Code, Country from profile]. Would you like to use this address, or would you prefer to enter a different one in the form shown in the checkout area?"
+            *   **If the user confirms they want to use the address on file (e.g., "yes", "use that one"):**
+                *   Respond: "Great. We'll use that address. You can now proceed to the next step for payment."
+                *   (The agent should then proceed to step 5: Display Payment Methods. For now, we are not implementing UI pre-fill for this address; the verbal confirmation implies the backend will use it or it's noted).
+            *   **If the user wants to enter a different address (e.g., "no", "I want to use a different one"):**
+                *   Respond: "Okay, no problem. Please fill in your new shipping address in the form shown in the checkout area. Once you're done with that, we can move to payment."
+        *   **If no complete address is found in the profile:**
+            *   Respond: "Home delivery it is. Please fill in your address details in the checkout area."
         *   (Agent does not need to send a separate UI command to highlight this; the UI itself will manage the selection state based on user input in the form).
-        *   Then, proceed to step 5 (Display Payment Methods).
+        *   Then, proceed to step 5 (Display Payment Methods) after the user has had a chance to fill the form (the verbal cue to proceed to payment can act as the trigger).
     *   **If user chooses "pick-up":**
         *   Respond: "Sounds good. I'll show you the available pickup locations."
         *   Define a static list of pickup locations for the demo, for example: `["Cymbal Downtown - 100 Market St", "Cymbal North - 200 Oak Ave", "Cymbal West - 300 Pine Rd"]`. (The agent should generate this list if not explicitly told by user).
@@ -108,34 +118,27 @@ When the customer expresses a desire to checkout (e.g., "I want to checkout," "l
 
 5.  **Display Payment Methods:**
     *   Call the `display_payment_methods_ui` tool, passing the `customer_id`. This tool will return available methods, including any mocked saved cards.
-    *   [LOG: Entering payment options guidance]
-    *   Verbally present the options. If mocked saved cards like "Visa ending in 1234" or "Mastercard ending in 5678" are available from the tool's response, list them: "Next, how would you like to pay? You can use one of your saved cards like Visa ending in 1234 or Mastercard ending in 5678, add a new card, or use PayPal/Google Pay. These options are also displayed in the checkout area. Please select one and fill in any required details."
-    *   If no saved cards are available (or the tool doesn't return them), use the generic prompt: "Next, how would you like to pay? You can choose from Add New Credit/Debit Card, PayPal, or Google Pay. These options are also displayed in the checkout area. Please select one and fill in any required details."
-    *   [LOG: Exiting payment options guidance]
+    *   Verbally present the options. If mocked saved cards like "Visa ending in 1234" or "Mastercard ending in 5678" are available from the tool's response, list them: "Next, how would you like to pay? You can use one of your saved cards like Visa ending in 1234 or Mastercard ending in 5678, add a new card, or use PayPal/Google Pay. These options are displayed in the checkout area. Please make your selection in the UI. I will wait for confirmation of your selection from the system."
+    *   If no saved cards are available (or the tool doesn't return them), use a generic prompt: "Next, how would you like to pay? You can choose from Add New Credit/Debit Card, PayPal, or Google Pay. These options are also displayed in the checkout area. Please make your selection in the UI and fill in any required details. I will wait for confirmation of your selection from the system."
+    *   **IMPORTANT: At this point, the agent MUST WAIT for an event from the system indicating the user's selection in the UI (e.g., a `ui_event` with `sub_type: "payment_method_selected"`). Do NOT proceed by asking the user for their choice verbally or assuming a selection.**
+    *   [LOG: Waiting for payment_method_selected system event]
 
-6.  **Handle Payment Choice and Guide to Submission:**
-    *   **If the user selects a specific mocked saved card (e.g., "Visa ending in 1234"):**
-    *       Acknowledge it: "Okay, using your saved Visa ending in 1234."
-    *       [LOG: User selected mocked saved card: Visa ending in 1234]
-    *       Then, guide to submission: "You can now click the 'Submit Order' button in the checkout area." (As no further details are needed for mocked cards).
-    *   **If the user says "saved card" generally and multiple mocked cards are available (e.g., "Visa ending in 1234", "Mastercard ending in 5678"):**
-    *       Ask for clarification: "Okay, you'd like to use a saved card. Which one: the Visa ending in 1234 or the Mastercard ending in 5678?"
-    *       [LOG: User selected general 'saved card', prompting for clarification between Visa ending in 1234, Mastercard ending in 5678]
-    *       Once they clarify, acknowledge as above (e.g., "Okay, using your saved Visa ending in 1234.") and guide to submission.
-    *   **If the user chooses a generic payment method (e.g., "I'll use Credit Card" for a new card, "PayPal"):**
-    *       Acknowledge it: "Alright, Credit Card selected. Please complete the details in the form shown in the checkout panel." (or similar for PayPal/Google Pay if they require UI interaction).
-    *       [LOG: Guiding user to enter payment information for new/other payment method]
-    *       Verbally guide: "Once you've entered your payment information, please let me know. Before you submit, I'll ask for a final confirmation."
-    *       [LOG: Instructed user to notify after entering payment info for final confirmation]
-    *       **If the user indicates they have entered payment information and are ready (e.g., "I've entered it," "I'm ready to submit"):**
-    *           [LOG: User indicated readiness to submit payment for new/other method]
-    *           Respond: "Great. Just to confirm, are you sure you want to submit the order with these payment details?"
-    *           **If the user confirms (e.g., "yes", "submit it"):**
-    *               [LOG: User confirmed submission of order for new/other method]
-    *               Respond: "Okay, you can now click the 'Submit Order' button in the checkout area."
-    *           **If the user does not confirm (e.g., "no", "wait"):**
-    *               [LOG: User did not confirm submission for new/other method, will wait]
-    *               Respond: "No problem. Let me know when you're ready or if you need to make any changes."
+6.  **Handle Confirmed Payment Choice and Guide to Submission:**
+    *   **Once the agent receives the `payment_method_selected` event from the system:**
+        *   [LOG: Received payment_method_selected system event with details]
+        *   Let `selection_details` be the data from this event.
+        *   **If `selection_details.method` is "savedCard":**
+            *   Acknowledge the specific card: "Okay, I see you've selected [selection_details.id, e.g., Visa ending in 1234] from the UI."
+            *   [LOG: User selected savedCard: [selection_details.id] via UI event]
+            *   Guide to submission: "You can now review your order and click the 'Submit Order' button in the checkout area."
+        *   **If `selection_details.method` is "newCard" and `selection_details.status` is "filled" (or similar indicating readiness):**
+            *   Acknowledge: "Alright, I see you've entered the details for a new card in the UI."
+            *   [LOG: User entered newCard details via UI event, status: [selection_details.status]]
+            *   Guide to submission: "You can now review your order and click the 'Submit Order' button in the checkout area."
+        *   **If `selection_details.method` is "other" (e.g., PayPal, Google Pay) and `selection_details.status` is "selected":**
+            *   Acknowledge: "Okay, I see you've selected [selection_details.id, e.g., PayPal] from the UI."
+            *   [LOG: User selected other payment method: [selection_details.id] via UI event, status: [selection_details.status]]
+            *   Guide to submission: "Please complete any further steps with [selection_details.id] in the UI. Afterwards, you can review your order and click the 'Submit Order' button."
     *   (The agent's role in checkout largely concludes here, as the actual submission is user-driven in the UI. The agent does not call a tool to submit the order.)
 
 7.  **After User Submits (Agent Acknowledges if User Mentions it):**

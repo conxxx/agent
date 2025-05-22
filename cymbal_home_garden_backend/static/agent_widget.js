@@ -1007,4 +1007,27 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
     showUIMode(false); // Start in text mode UI
     updateMicIcon(false, false); // Mic disabled initially
 
+    // Listen for payment selection events from script.js (running in the same document)
+    document.addEventListener('checkoutPaymentSelected', (event) => {
+        if (event.detail) { // Make sure detail exists
+            console.log("[Agent Widget] Received 'checkoutPaymentSelected' DOM event. Detail:", event.detail);
+            
+            // Ensure WebSocket is ready before sending
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                console.warn("[Agent Widget] WebSocket not open/ready. Cannot send payment selection to agent.", event.detail);
+                // Optionally, you could queue this message or notify the user/agent of the issue.
+                // For now, just log a warning.
+                return;
+            }
+
+            sendMessageToServer({
+                event: "ui_event", // General event type for the agent
+                sub_type: "payment_method_selected", // Specific sub_type for the agent to recognize
+                data: event.detail // Contains { method: "savedCard", id: "...", ... } or { method: "newCard", status: "..." }
+            });
+            console.log("[Agent Widget] Payment selection details sent to agent via WebSocket.");
+        } else {
+            console.warn("[Agent Widget] Received 'checkoutPaymentSelected' DOM event, but event.detail is missing.");
+        }
+    });
 });
