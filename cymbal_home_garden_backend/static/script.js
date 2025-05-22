@@ -750,7 +750,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         checkoutModalBodyPh1.querySelectorAll('input[name="savedCardOption"]')?.forEach(radio => {
-            radio.addEventListener('change', e => { payInfo.savedCardId = e.target.value; nextCheckoutBtnPh1.disabled = false; });
+            radio.addEventListener('change', e => { 
+                payInfo.savedCardId = e.target.value; 
+                nextCheckoutBtnPh1.disabled = false; 
+                console.log('[Checkout] Dispatching checkoutPaymentSelected event (savedCard): ', payInfo.savedCardId);
+                document.dispatchEvent(new CustomEvent('checkoutPaymentSelected', {
+                    detail: { // Corrected: payload is in event.detail
+                        method: "savedCard",
+                        id: payInfo.savedCardId,
+                        display_name: e.target.parentElement.textContent.trim()
+                    }
+                }));
+            });
         });
         ['cardNumber', 'expiryDate', 'cvv', 'cardholderName'].forEach(id => {
             const inputId = id === 'cardNumber' ? 'card-number' : id === 'expiryDate' ? 'card-expiry' : id === 'cardholderName' ? 'cardholder-name' : `card-${id}`;
@@ -761,10 +772,26 @@ document.addEventListener('DOMContentLoaded', () => {
             nextCheckoutBtnPh1.textContent = 'Next: Review Order';
             nextCheckoutBtnPh1.disabled = !(payInfo.method === 'newCard' || (payInfo.method === 'savedCard' && payInfo.savedCardId));
             nextCheckoutBtnPh1.onclick = () => {
-                if (payInfo.method === 'newCard' && Object.values(newCard).some(v => !v.trim())) { alert("Please fill all card details."); return; }
-                if (payInfo.method === 'newCard' && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(newCard.expiryDate.trim())) { alert("Please enter expiry date in MM/YY format."); return; }
-                if (!payInfo.method || (payInfo.method === 'savedCard' && !payInfo.savedCardId) ) { alert("Please select a payment option."); return; }
-                renderOrderReviewStep();
+                if (payInfo.method === 'newCard') {
+                    // Validations for new card
+                    if (Object.values(newCard).some(v => !v.trim())) { alert("Please fill all card details."); return; }
+                    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(newCard.expiryDate.trim())) { alert("Please enter expiry date in MM/YY format."); return; }
+                    
+                    console.log('[Checkout] Dispatching checkoutPaymentSelected event (newCard).');
+                    document.dispatchEvent(new CustomEvent('checkoutPaymentSelected', {
+                        detail: { // Corrected: payload is in event.detail
+                            method: "newCard",
+                            status: "filled_and_validated"
+                        }
+                    }));
+                    renderOrderReviewStep(); // Proceed to next step
+                } else if (payInfo.method === 'savedCard' && payInfo.savedCardId) {
+                    // For saved card, event was already dispatched on selection. Just proceed.
+                    renderOrderReviewStep();
+                } else {
+                    // If no valid method is selected (should be caught by button disable logic, but as a fallback)
+                    alert("Please select a payment option.");
+                }
             };
         }
         if(backCheckoutBtnPh1) {
