@@ -62,9 +62,12 @@ Always use conversation context/state or tools to get information. Prefer tools 
             *   **(Agent Internal Step: If `recommendation_cycle_count >= 3`, you MUST skip the following recommendation steps and proceed directly to "Offer Care Instructions" below.)**
 
         *   **Fetch Current Product Details for Recommendation:**
-            *   Silently use `search_products(query=current_product_id, customer_id=customer_id)`. (Note: `customer_id` is available from the `GLOBAL_INSTRUCTION`). From the results, select the product entry that exactly matches `current_product_id`.
-            *   Let `product_details` be the details of `current_product_id`.
-            *   **(Agent Internal Step: If `search_products` did not return a valid entry for `current_product_id`, or if `product_details` is missing essential fields like `companion_plants_ids`, `recommended_soil_ids`, or `recommended_fertilizer_ids`, skip to "Offer Care Instructions" below.)**
+            *   To get the full details of `current_product_id`, you MUST use the `get_product_recommendations(product_ids=[current_product_id], customer_id=customer_id)` tool. (Note: `customer_id` is available from the `GLOBAL_INSTRUCTION`).
+            *   The result from this tool will be a dictionary, for example: `{"recommendations": [product_details_object], "errors_fetching_recommendations": ...}`.
+            *   Extract the list under the "recommendations" key. Let this be `current_product_details_list`.
+            *   Initialize `product_details = None`.
+            *   If `current_product_details_list` is not empty, set `product_details = current_product_details_list[0]`.
+            *   **(Agent Internal Step: If `product_details` is `None`, or if `product_details` is missing essential fields like `companion_plants_ids`, `recommended_soil_ids`, or `recommended_fertilizer_ids` (treat missing keys as empty lists for this check), skip the following recommendation steps and proceed directly to "Offer Care Instructions" below.)**
 
         *   **Extract Potential Recommendation IDs:**
             *   From `product_details`, get `companion_ids = product_details.get("companion_plants_ids", [])`, `soil_ids = product_details.get("recommended_soil_ids", [])`, and `fertilizer_ids = product_details.get("recommended_fertilizer_ids", [])`.
