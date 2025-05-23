@@ -57,17 +57,28 @@ async def simulate_agent_processing_after_cart_add(agent_context, added_product_
         return
 
     # Fetch Current Product Details
-    agent_context.record_tool_call("search_products", query=current_product_id, customer_id=agent_context.customer_id)
-    product_details_response = await mock_tool_manager.search_products(query=current_product_id, customer_id=agent_context.customer_id)
+    agent_context.record_tool_call("get_product_recommendations", product_ids=[current_product_id], customer_id=agent_context.customer_id)
+    # This call is for the *triggering* product
+    current_product_details_response = await mock_tool_manager.get_product_recommendations(product_ids=[current_product_id], customer_id=agent_context.customer_id)
     
     product_details = None
-    if product_details_response and product_details_response.get("products"):
-        for p in product_details_response["products"]:
-            if p.get("id") == current_product_id:
-                product_details = p
-                break
+    if current_product_details_response and current_product_details_response.get("recommendations"):
+        if current_product_details_response["recommendations"]:
+             # Assuming the first item in recommendations is the product detail we want
+            product_details = current_product_details_response["recommendations"][0]
 
-    if not product_details or not any(k in product_details for k in ["companion_plants_ids", "recommended_soil_ids", "recommended_fertilizer_ids"]):
+    # Check if essential fields are missing (treat missing keys as empty lists for this check)
+    if not product_details or not all(k in product_details for k in ["companion_plants_ids", "recommended_soil_ids", "recommended_fertilizer_ids"]):
+        # If any essential key is missing, even if it's an empty list, the original check was:
+        # "product_details is missing essential fields like companion_plants_ids..."
+        # The prompt implies these keys should exist. A more robust check might be:
+        # if not product_details or any(product_details.get(k) is None for k in ["companion_plants_ids", ...])
+        # For now, sticking to "missing essential fields" means the key itself is absent or product_details is None.
+        # The prompt also says: "(treat missing keys as empty lists for this check)" when *extracting* them later,
+        # but for the *existence* check, it implies they should be there.
+        # Let's refine the condition to: if product_details is None, or if any of the specified keys are not in product_details.
+        essential_keys = ["companion_plants_ids", "recommended_soil_ids", "recommended_fertilizer_ids"]
+        if not product_details or not all(key in product_details for key in essential_keys):
         if "plant" in current_product_name.lower(): # Simplified check
              agent_context.add_response(f"Now that we've added {current_product_name} to your cart, would you like summarized care instructions for it?")
         return
@@ -157,24 +168,31 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
              "SKU_PRODUCT_F": {"id": "SKU_PRODUCT_F", "name": "Product F", "type": "plant", "companion_plants_ids": ["SKU_COMP_F"]}, # Used in cycle limit
              "SKU_PRODUCT_G": {"id": "SKU_PRODUCT_G", "name": "Product G", "type": "plant"},
              "SKU_COMP_F": {"id": "SKU_COMP_F", "name": "Companion F", "type": "plant"},
+            "SKU_FAIL": {"id": "SKU_FAIL", "name": "Failed Product Plant", "type": "plant"}, # For failure test
         }
 
-    def _setup_mock_search_products(self, product_id_to_return):
-        async def mock_search_fn(query, customer_id):
-            # In reality, `query` might be a name. For these tests, we assume direct ID search for simplicity.
-            if query in self.products_db:
-                return {"products": [self.products_db[query]]}
-            return {"products": []}
-        self.mock_tool_manager.search_products = AsyncMock(side_effect=mock_search_fn)
+    # _setup_mock_search_products might still be useful if other agent parts use it,
+    # but for the recommendation trigger, it's replaced by get_product_recommendations.
+    # For clarity in these specific tests, we'll focus on get_product_recommendations.
+    # If search_products were still needed for other flows, it would remain.
 
-    def _setup_mock_get_product_recommendations(self, product_ids_to_return_details_for):
+    def _setup_mock_get_product_recommendations(self):
+        """
+        Sets up mock for get_product_recommendations.
+        It handles calls for a single product (fetching current_product_id details)
+        and for multiple products (fetching details for generated recommendations).
+        """
         async def mock_get_recs_fn(product_ids, customer_id):
+            # This function will now be the primary source for product details
+            # both for the triggering product and subsequent recommendations.
             recs = []
             for pid in product_ids:
                 if pid in self.products_db:
-                    recs.append(self.products_db[pid]) # Simplified: returns full product detail
-            return {"recommendations": recs}
+                    # Ensure the full detail as per products_db is returned
+                    recs.append(self.products_db[pid]) 
+            return {"recommendations": recs, "errors_fetching_recommendations": None}
         self.mock_tool_manager.get_product_recommendations = AsyncMock(side_effect=mock_get_recs_fn)
+
 
     def _setup_mock_format_display(self):
         self.mock_tool_manager.format_product_recommendations_for_display = AsyncMock(return_value={"status": "ok"})
@@ -184,23 +202,24 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
         agent_context = AgentContext()
         agent_context.recommendation_cycle_count = 0
 
-        self._setup_mock_search_products("SKU_LAVENDER")
-        self._setup_mock_get_product_recommendations(["SKU_ROSEMARY", "SKU_SOIL_WELLDRAIN"])
+        self._setup_mock_get_product_recommendations() # Unified mock
         self._setup_mock_format_display()
 
         await simulate_agent_processing_after_cart_add(
             agent_context, "SKU_LAVENDER", "English Lavender 'Munstead'", self.mock_tool_manager
         )
 
-        # Assert search_products was called
-        search_call = agent_context.get_last_tool_call("search_products")
-        self.assertIsNotNone(search_call)
-        self.assertEqual(search_call["args"]["query"], "SKU_LAVENDER")
+        # Assert get_product_recommendations was called for current_product_id
+        # It will be the first call to this tool.
+        first_get_recs_call = agent_context.tool_calls[0]
+        self.assertEqual(first_get_recs_call["name"], "get_product_recommendations")
+        self.assertCountEqual(first_get_recs_call["args"]["product_ids"], ["SKU_LAVENDER"])
 
-        # Assert get_product_recommendations was called
-        get_recs_call = agent_context.get_last_tool_call("get_product_recommendations")
-        self.assertIsNotNone(get_recs_call)
-        self.assertCountEqual(get_recs_call["args"]["product_ids"], ["SKU_ROSEMARY", "SKU_SOIL_WELLDRAIN"])
+        # Assert get_product_recommendations was called for the actual recommendations
+        # This will be the second call to this tool.
+        second_get_recs_call = agent_context.tool_calls[1]
+        self.assertEqual(second_get_recs_call["name"], "get_product_recommendations")
+        self.assertCountEqual(second_get_recs_call["args"]["product_ids"], ["SKU_ROSEMARY", "SKU_SOIL_WELLDRAIN"])
         
         # Assert format_product_recommendations_for_display was called
         format_call = agent_context.get_last_tool_call("format_product_recommendations_for_display")
@@ -223,19 +242,23 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
         agent_context = AgentContext()
         agent_context.recommendation_cycle_count = 0
 
-        self._setup_mock_search_products("SKU_PRODUCT_MULTI")
-        # Expected: SKU_COMP1, SKU_COMP2, SKU_SOIL1 (companions first, then soil, max 3)
-        self._setup_mock_get_product_recommendations(["SKU_COMP1", "SKU_COMP2", "SKU_SOIL1"])
+        self._setup_mock_get_product_recommendations() # Unified mock
         self._setup_mock_format_display()
 
         await simulate_agent_processing_after_cart_add(
             agent_context, "SKU_PRODUCT_MULTI", "Multi-Rec Product", self.mock_tool_manager
         )
+
+        # First call for SKU_PRODUCT_MULTI
+        first_get_recs_call = agent_context.tool_calls[0]
+        self.assertEqual(first_get_recs_call["name"], "get_product_recommendations")
+        self.assertCountEqual(first_get_recs_call["args"]["product_ids"], ["SKU_PRODUCT_MULTI"])
         
-        get_recs_call = agent_context.get_last_tool_call("get_product_recommendations")
-        self.assertIsNotNone(get_recs_call)
-        self.assertEqual(len(get_recs_call["args"]["product_ids"]), 3)
-        self.assertCountEqual(get_recs_call["args"]["product_ids"], ["SKU_COMP1", "SKU_COMP2", "SKU_SOIL1"])
+        # Second call for its recommendations
+        second_get_recs_call = agent_context.tool_calls[1]
+        self.assertEqual(second_get_recs_call["name"], "get_product_recommendations")
+        self.assertEqual(len(second_get_recs_call["args"]["product_ids"]), 3)
+        self.assertCountEqual(second_get_recs_call["args"]["product_ids"], ["SKU_COMP1", "SKU_COMP2", "SKU_SOIL1"])
 
         format_call = agent_context.get_last_tool_call("format_product_recommendations_for_display")
         self.assertIsNotNone(format_call)
@@ -249,27 +272,28 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
 
     async def test_chained_recommendation_user_selects_recommended_item(self):
         agent_context = AgentContext()
-        # Simulate state after Test Case 1: Lavender added, Rosemary and Soil recommended
         agent_context.recommendation_cycle_count = 1 # Set by previous cycle for Lavender
 
-        # Now user adds SKU_ROSEMARY (which was one of the recommendations)
-        self._setup_mock_search_products("SKU_ROSEMARY") # For Rosemary itself
-        self._setup_mock_get_product_recommendations(["SKU_SAGE"]) # For Sage, companion of Rosemary
+        self._setup_mock_get_product_recommendations() # Unified mock
         self._setup_mock_format_display()
 
+        # User adds SKU_ROSEMARY (which was one of the recommendations for Lavender)
         await simulate_agent_processing_after_cart_add(
             agent_context, "SKU_ROSEMARY", "Rosemary officinalis", self.mock_tool_manager
         )
 
-        search_call = agent_context.get_last_tool_call("search_products")
-        self.assertEqual(search_call["args"]["query"], "SKU_ROSEMARY")
+        # First call for SKU_ROSEMARY itself
+        first_get_recs_call = agent_context.tool_calls[0]
+        self.assertEqual(first_get_recs_call["name"], "get_product_recommendations")
+        self.assertCountEqual(first_get_recs_call["args"]["product_ids"], ["SKU_ROSEMARY"])
 
         # Crucially, cycle count should NOT have been reset
         self.assertEqual(agent_context.recommendation_cycle_count, 2) # Incremented from 1 to 2
 
-        get_recs_call = agent_context.get_last_tool_call("get_product_recommendations")
-        self.assertIsNotNone(get_recs_call)
-        self.assertCountEqual(get_recs_call["args"]["product_ids"], ["SKU_SAGE"])
+        # Second call for Sage (companion of Rosemary)
+        second_get_recs_call = agent_context.tool_calls[1]
+        self.assertEqual(second_get_recs_call["name"], "get_product_recommendations")
+        self.assertCountEqual(second_get_recs_call["args"]["product_ids"], ["SKU_SAGE"])
         
         format_call = agent_context.get_last_tool_call("format_product_recommendations_for_display")
         self.assertIsNotNone(format_call)
@@ -285,33 +309,38 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
 
     async def test_recommendation_cycle_limit_reached_max_3_cycles(self):
         agent_context = AgentContext()
-        # Simulate state after Product A -> B, C (cycle 1), User adds B -> D, E (cycle 2), User adds D -> F, G (cycle 3)
-        agent_context.recommendation_cycle_count = 3 # Manually set to simulate reaching the limit
+        agent_context.recommendation_cycle_count = 3 
 
-        # User now adds Product F (which was recommended in the 3rd cycle)
-        # Mock search for F, though it shouldn't be used for *further* recommendations
-        self._setup_mock_search_products("SKU_PRODUCT_F")
-        self.mock_tool_manager.get_product_recommendations = AsyncMock() # Should not be called
-        self.mock_tool_manager.format_product_recommendations_for_display = AsyncMock() # Should not be called
+        self._setup_mock_get_product_recommendations() # Unified mock
+        # format_product_recommendations_for_display should not be called
+        self.mock_tool_manager.format_product_recommendations_for_display = AsyncMock()
         
         await simulate_agent_processing_after_cart_add(
             agent_context, "SKU_PRODUCT_F", "Product F", self.mock_tool_manager
         )
         
-        # Assert that recommendation_cycle_count remains 3 (not reset, not incremented beyond)
         self.assertEqual(agent_context.recommendation_cycle_count, 3)
 
-        # Assert that no NEW recommendations were fetched or displayed
-        # The search_products for F itself would be called by the basic logic, but not for its companions.
-        search_call_for_F = agent_context.get_last_tool_call("search_products")
-        self.assertIsNotNone(search_call_for_F) # This is okay, to know F's type for care instructions
-        self.assertEqual(search_call_for_F["args"]["query"], "SKU_PRODUCT_F")
+        # get_product_recommendations for SKU_PRODUCT_F itself *is* called to check its nature for care instructions.
+        # This is the only call to get_product_recommendations.
+        self.assertEqual(len(agent_context.tool_calls), 1)
+        get_recs_call_for_F = agent_context.tool_calls[0]
+        self.assertEqual(get_recs_call_for_F["name"], "get_product_recommendations")
+        self.assertCountEqual(get_recs_call_for_F["args"]["product_ids"], ["SKU_PRODUCT_F"])
 
-
-        self.mock_tool_manager.get_product_recommendations.assert_not_called()
+        # No *further* recommendations should be fetched or displayed
+        # This means the mock_tool_manager.get_product_recommendations should only have been called ONCE for SKU_PRODUCT_F
+        # and format_product_recommendations_for_display should not have been called at all.
+        
+        # Filter tool_calls to find calls for fetching *subsequent* recommendations (more than 1 id, or not the first call)
+        subsequent_rec_calls = [
+            call for call in agent_context.tool_calls 
+            if call["name"] == "get_product_recommendations" and call["args"]["product_ids"] != ["SKU_PRODUCT_F"]
+        ]
+        self.assertEqual(len(subsequent_rec_calls), 0, "Should not fetch details for new recommendations")
+        
         self.mock_tool_manager.format_product_recommendations_for_display.assert_not_called()
         
-        # Only care instructions should be offered
         self.assertIn(
             "Now that we've added Product F to your cart, would you like summarized care instructions for it?",
             agent_context.agent_responses
@@ -326,24 +355,28 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
         agent_context = AgentContext()
         agent_context.recommendation_cycle_count = 0
 
-        self._setup_mock_search_products("SKU_PRODUCT_NO_RECS") # Product has no rec IDs
-        self.mock_tool_manager.get_product_recommendations = AsyncMock()
+        self._setup_mock_get_product_recommendations() # Unified mock
+        # format_product_recommendations_for_display should not be called
         self.mock_tool_manager.format_product_recommendations_for_display = AsyncMock()
+
 
         await simulate_agent_processing_after_cart_add(
             agent_context, "SKU_PRODUCT_NO_RECS", "Plain Plant", self.mock_tool_manager
         )
 
-        search_call = agent_context.get_last_tool_call("search_products")
-        self.assertIsNotNone(search_call)
-        self.assertEqual(search_call["args"]["query"], "SKU_PRODUCT_NO_RECS")
+        # get_product_recommendations for SKU_PRODUCT_NO_RECS itself is called
+        self.assertEqual(len(agent_context.tool_calls), 1)
+        get_recs_call_for_no_recs = agent_context.tool_calls[0]
+        self.assertEqual(get_recs_call_for_no_recs["name"], "get_product_recommendations")
+        self.assertCountEqual(get_recs_call_for_no_recs["args"]["product_ids"], ["SKU_PRODUCT_NO_RECS"])
         
-        self.mock_tool_manager.get_product_recommendations.assert_not_called()
+        # No *further* recommendations should be fetched or displayed
+        # Check that no other get_product_recommendations call was made for recommendations
+        # and format_product_recommendations_for_display was not called.
+        # The previous check on len(agent_context.tool_calls) == 1 already implies no further get_product_recommendations.
         self.mock_tool_manager.format_product_recommendations_for_display.assert_not_called()
         
-        # recommendation_cycle_count should remain 0 as no recommendations were made
         self.assertEqual(agent_context.recommendation_cycle_count, 0)
-        
         self.assertIn(
             "Now that we've added Plain Plant to your cart, would you like summarized care instructions for it?",
             agent_context.agent_responses
@@ -355,34 +388,28 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
 
     async def test_user_adds_new_product_not_from_recommendations_counter_reset(self):
         agent_context = AgentContext()
-        # Simulate: Product A added -> Recommends B, C. Cycle count becomes 1.
-        # We don't need to run the full simulation for A, just set the state.
         agent_context.recommendation_cycle_count = 1 # After A's recommendations
 
-        # User now adds Product X (completely new, not B or C)
-        self._setup_mock_search_products("SKU_PRODUCT_X") # For Product X
-        self._setup_mock_get_product_recommendations(["SKU_COMP_X"]) # For X's companion
+        self._setup_mock_get_product_recommendations() # Unified mock
         self._setup_mock_format_display()
         
-        # Crucial part: the main agent logic (not part of simulate_agent_processing_after_cart_add)
-        # would need to detect that SKU_PRODUCT_X was NOT from the last set of recommendations
-        # and reset recommendation_cycle_count BEFORE calling the recommendation sub-logic.
-        # We simulate this reset here:
         agent_context.recommendation_cycle_count = 0 # Simulating reset by main agent flow
 
         await simulate_agent_processing_after_cart_add(
             agent_context, "SKU_PRODUCT_X", "Product X (New)", self.mock_tool_manager
         )
 
-        search_call = agent_context.get_last_tool_call("search_products")
-        self.assertEqual(search_call["args"]["query"], "SKU_PRODUCT_X")
-
-        # Cycle count should now be 1 (for Product X's own recommendations)
+        # First call for SKU_PRODUCT_X itself
+        first_get_recs_call = agent_context.tool_calls[0]
+        self.assertEqual(first_get_recs_call["name"], "get_product_recommendations")
+        self.assertCountEqual(first_get_recs_call["args"]["product_ids"], ["SKU_PRODUCT_X"])
+        
         self.assertEqual(agent_context.recommendation_cycle_count, 1) 
 
-        get_recs_call = agent_context.get_last_tool_call("get_product_recommendations")
-        self.assertIsNotNone(get_recs_call)
-        self.assertCountEqual(get_recs_call["args"]["product_ids"], ["SKU_COMP_X"])
+        # Second call for X's companion
+        second_get_recs_call = agent_context.tool_calls[1]
+        self.assertEqual(second_get_recs_call["name"], "get_product_recommendations")
+        self.assertCountEqual(second_get_recs_call["args"]["product_ids"], ["SKU_COMP_X"])
 
         format_call = agent_context.get_last_tool_call("format_product_recommendations_for_display")
         self.assertIsNotNone(format_call)
@@ -395,28 +422,50 @@ class TestRecommendationLogic(unittest.IsolatedAsyncioTestCase):
             agent_context.agent_responses
         )
 
-    async def test_product_added_but_search_products_fails(self):
+    async def test_product_added_but_get_recommendations_fails_for_current_product(self):
         agent_context = AgentContext()
         agent_context.recommendation_cycle_count = 0
 
-        # Mock search_products to return empty or insufficient data
-        self.mock_tool_manager.search_products = AsyncMock(return_value={"products": []}) # Empty result
-        # Or: self.mock_tool_manager.search_products = AsyncMock(return_value={"products": [{"id": "SKU_FAIL", "name": "Failed Product"}]}) # No rec fields
+        # Mock get_product_recommendations to return empty or error for the initial product
+        async def mock_get_recs_fail_fn(product_ids, customer_id):
+            if product_ids == ["SKU_FAIL"]:
+                return {"recommendations": [], "errors_fetching_recommendations": ["Failed to fetch SKU_FAIL"]}
+            # Fallback for any other calls (though not expected in this test path if first fails)
+            recs = []
+            for pid in product_ids:
+                if pid in self.products_db:
+                    recs.append(self.products_db[pid])
+            return {"recommendations": recs}
 
-        self.mock_tool_manager.get_product_recommendations = AsyncMock()
+        self.mock_tool_manager.get_product_recommendations = AsyncMock(side_effect=mock_get_recs_fail_fn)
         self.mock_tool_manager.format_product_recommendations_for_display = AsyncMock()
 
         await simulate_agent_processing_after_cart_add(
-            agent_context, "SKU_FAIL", "Failed Product Plant", self.mock_tool_manager # Assume "Plant" in name for care instructions part
+            agent_context, "SKU_FAIL", "Failed Product Plant", self.mock_tool_manager
         )
+        
+        # Assert get_product_recommendations was called for SKU_FAIL
+        self.mock_tool_manager.get_product_recommendations.assert_any_call(product_ids=["SKU_FAIL"], customer_id=agent_context.customer_id)
+        
+        # No further get_product_recommendations for *subsequent* items should be called
+        # And format should not be called
+        format_call_count = 0
+        for call in agent_context.tool_calls:
+            if call["name"] == "format_product_recommendations_for_display":
+                format_call_count +=1
+        self.assertEqual(format_call_count, 0)
+        
+        # Check that only one call to get_product_recommendations was made (for SKU_FAIL)
+        get_recs_call_count = 0
+        for call in agent_context.tool_calls:
+            if call["name"] == "get_product_recommendations":
+                get_recs_call_count +=1
+        self.assertEqual(get_recs_call_count, 1)
 
-        self.mock_tool_manager.search_products.assert_called_once_with(query="SKU_FAIL", customer_id=agent_context.customer_id)
-        self.mock_tool_manager.get_product_recommendations.assert_not_called()
-        self.mock_tool_manager.format_product_recommendations_for_display.assert_not_called()
 
         self.assertEqual(agent_context.recommendation_cycle_count, 0)
         self.assertIn(
-            "Now that we've added Failed Product Plant to your cart, would you like summarized care instructions for it?", # Falls through to care
+            "Now that we've added Failed Product Plant to your cart, would you like summarized care instructions for it?",
             agent_context.agent_responses
         )
         self.assertNotIn(
