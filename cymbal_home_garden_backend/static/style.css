@@ -15,26 +15,26 @@
     --footer-text-light: #f4f4f4;
     --card-bg-light: #fff;
     --card-border-light: #ddd;
-    --button-bg-light: #007bff;
+    --button-bg-light: #007AFF;
     --button-text-light: #fff;
     --secondary-button-bg-light: #6c757d;
     --secondary-button-text-light: #fff;
     --modal-bg-light: #fff;
     --modal-shadow-light: rgba(0,0,0,0.2);
-    --input-border-light: #ccc;
-    --section-title-border-light: #007bff;
-    --checkout-step-active-bg-light: #007bff;
+    --input-border-light: #C6C6C8;
+    --section-title-border-light: #007AFF;
+    --checkout-step-active-bg-light: #007AFF;
     --checkout-step-active-text-light: #fff;
     --checkout-step-inactive-bg-light: #e9ecef;
     --checkout-step-inactive-text-light: #495057;
     --agent-info-text-light: #555;
 
     /* Glassmorphism Variables - Light */
-    --glass-bg-light: rgba(255, 255, 255, 0.6);
-    --glass-blur-light: 8px; /* Slightly reduced blur for performance if needed */
-    --glass-border-radius-light: 16px; /* Standardized radius */
-    --glass-shadow-light: rgba(0, 0, 0, 0.1);
-    --glass-border-color-light: rgba(255, 255, 255, 0.25);
+    --glass-bg-light: rgba(255, 255, 255, 0.65);
+    --glass-blur-light: 10px;
+    --glass-border-radius-light: 18px;
+    --glass-shadow-light: rgba(0, 0, 0, 0.15);
+    --glass-border-color-light: rgba(255, 255, 255, 0.3);
 
 
     /* New variables for agent launcher and specific buttons - Light */
@@ -43,10 +43,10 @@
     --agent-launcher-hover-bg-light: #154225; /* Slightly lighter green */
     --button-danger-bg-light: #e74c3c; /* Red */
     --button-danger-text-light: #fff;
-    --button-danger-hover-bg-light: #c0392b; /* Darker red */
+    --button-danger-hover-bg-light: #a93226; /* Darker red */
     --button-neutral-bg-light: #7f8c8d; /* Gray */
     --button-neutral-text-light: #fff;
-    --button-neutral-hover-bg-light: #6c7a7b; /* Darker gray */
+    --button-neutral-hover-bg-light: #5d6a6b; /* Darker gray */
 
     /* Dark Theme Variables */
     --background-color-dark: #1a1a1a;
@@ -55,27 +55,27 @@
     --footer-bg-dark: #111;
     --footer-text-dark: #ccc;
     --card-bg-dark: #252525;
-    --card-border-dark: #444;
-    --button-bg-dark: #0056b3;
+    --card-border-dark: rgba(255, 255, 255, 0.15);
+    --button-bg-dark: #0A84FF;
     --button-text-dark: #fff;
     --secondary-button-bg-dark: #5a6268;
     --secondary-button-text-dark: #fff;
     --modal-bg-dark: #282828;
     --modal-shadow-dark: rgba(255,255,255,0.1);
-    --input-border-dark: #555;
-    --section-title-border-dark: #3498db;
-    --checkout-step-active-bg-dark: #0056b3;
+    --input-border-dark: #545458;
+    --section-title-border-dark: #0A84FF;
+    --checkout-step-active-bg-dark: #0A84FF;
     --checkout-step-active-text-dark: #fff;
     --checkout-step-inactive-bg-dark: #343a40;
     --checkout-step-inactive-text-dark: #adb5bd;
     --agent-info-text-dark: #bbb;
 
     /* Glassmorphism Variables - Dark */
-    --glass-bg-dark: rgba(30, 30, 30, 0.6); /* Darker base for night mode */
-    --glass-blur-dark: 8px;
-    --glass-border-radius-dark: 16px;
-    --glass-shadow-dark: rgba(0, 0, 0, 0.2); /* Slightly more visible shadow in dark */
-    --glass-border-color-dark: rgba(255, 255, 255, 0.1);
+    --glass-bg-dark: rgba(40, 40, 40, 0.75);
+    --glass-blur-dark: 12px;
+    --glass-border-radius-dark: 18px;
+    --glass-shadow-dark: rgba(0, 0, 0, 0.25);
+    --glass-border-color-dark: rgba(255, 255, 255, 0.15);
 
 
     /* New variables for agent launcher and specific buttons - Dark */
@@ -84,10 +84,10 @@
     --agent-launcher-hover-bg-dark: #0D2B1A; /* Darker hover green for dark mode */
     --button-danger-bg-dark: #D32F2F; /* Slightly less bright red for dark mode */
     --button-danger-text-dark: #fff;
-    --button-danger-hover-bg-dark: #B71C1C; /* Darker red for hover in dark mode */
+    --button-danger-hover-bg-dark: #9a1616; /* Darker red for hover in dark mode */
     --button-neutral-bg-dark: #616161; /* Mid-dark gray for dark mode */
     --button-neutral-text-dark: #fff;
-    --button-neutral-hover-bg-dark: #424242; /* Darker gray for hover in dark mode */
+    --button-neutral-hover-bg-dark: #333333; /* Darker gray for hover in dark mode */
 
     /* Default to light theme - Current Variables */
     --current-bg: var(--background-color-light);
@@ -96,7 +96,7 @@
     --current-footer-bg: var(--footer-bg-light);
     --current-footer-text: var(--footer-text-light);
     --current-card-bg: var(--card-bg-light);
-    --current-card-border: var(--card-border-light);
+    --current-card-border: var(--glass-border-color-light);
     --current-button-bg: var(--button-bg-light);
     --current-button-text: var(--button-text-light);
     --current-secondary-button-bg: var(--secondary-button-bg-light);
@@ -145,7 +145,7 @@ body.night-mode {
     --current-footer-bg: var(--footer-bg-dark);
     --current-footer-text: var(--footer-text-dark);
     --current-card-bg: var(--card-bg-dark);
-    --current-card-border: var(--card-border-dark);
+    --current-card-border: var(--glass-border-color-dark);
     --current-button-bg: var(--button-bg-dark);
     --current-button-text: var(--button-text-dark);
     --current-secondary-button-bg: var(--secondary-button-bg-dark);
@@ -221,6 +221,81 @@ header div button:hover {
     transform: translateY(-1px);
 }
 
+/* Hero Banner Styles */
+#hero-banner {
+    width: 100%; /* Full width of its container */
+    min-height: 300px; /* Minimum height, can adjust */
+    background-image: url('https://picsum.photos/seed/gardening/1600/400'); /* Placeholder image */
+    background-size: cover;
+    background-position: center;
+    border-radius: var(--current-glass-border-radius); /* Use theme's border radius for consistency */
+    display: flex;
+    align-items: center; /* Vertically center content */
+    justify-content: center; /* Horizontally center content */
+    text-align: center;
+    padding: 2rem;
+    margin-bottom: 2rem; /* Space below the banner */
+    box-shadow: inset 0 0 0 1000px rgba(0,0,0,0.3); /* Dark overlay for text readability */
+}
+
+.hero-content h1 {
+    font-size: 2.8rem;
+    color: #fff;
+    margin-bottom: 0.75rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.hero-content p {
+    font-size: 1.3rem;
+    color: #f0f0f0;
+    margin-bottom: 1.5rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+}
+
+/* Optional: Styling for a call to action button if uncommented in HTML 
+.hero-content .btn-primary {
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+    padding: 0.8rem 1.5rem;
+    text-decoration: none;
+    border-radius: var(--current-glass-border-radius);
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.hero-content .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+*/
+
+/* Responsive adjustments for the banner */
+@media (max-width: 768px) {
+    #hero-banner {
+        min-height: 250px;
+        padding: 1.5rem;
+    }
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+    .hero-content p {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #hero-banner {
+        min-height: 200px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .hero-content h1 {
+        font-size: 1.6rem;
+    }
+    .hero-content p {
+        font-size: 0.9rem;
+    }
+}
 
 main {
     padding: 1rem;
@@ -1479,15 +1554,15 @@ body header {
 /* Ensure the flying item animation style is defined */
 @keyframes flyingItemGlowAndRotate {
     0% {
-        box-shadow: 0 0 5px var(--current-button-bg), 0 0 10px var(--current-button-bg), 0 0 15px #00ff00, 0 0 20px #00ff00;
+        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #32cd32, 0 0 20px #32cd32; /* Green shades */
         transform: rotate(0deg) scale(1);
     }
     50% {
-        box-shadow: 0 0 10px var(--current-button-bg), 0 0 20px #00ff00, 0 0 25px #00dd00, 0 0 30px #00cc00;
+        box-shadow: 0 0 10px #00ff00, 0 0 20px #32cd32, 0 0 25px #228b22, 0 0 30px #228b22; /* More green shades */
         transform: rotate(180deg) scale(1.1);
     }
     100% {
-        box-shadow: 0 0 5px var(--current-button-bg), 0 0 10px var(--current-button-bg), 0 0 15px #00ff00, 0 0 20px #00ff00;
+        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #32cd32, 0 0 20px #32cd32; /* Green shades */
         transform: rotate(360deg) scale(1);
     }
 }
@@ -1600,4 +1675,89 @@ input[type="reset"] {
     /* Ensure the label itself has display: block or inline-block if it needs to contain the shadow correctly */
     display: block; /* Or inline-block, depending on layout */
     transition: box-shadow 0.3s ease-in-out; /* Smooth transition if animation is removed/added */
+}
+
+/* Additional Responsive Adjustments for Very Small Screens */
+@media (max-width: 375px) {
+    header {
+        padding: 0.75rem 1rem; /* Reduced header padding */
+    }
+    header h1 {
+        font-size: 1.5rem; /* Reduced header font size */
+    }
+    header div button {
+        padding: 0.4rem 0.8rem; /* Reduced header button padding */
+        font-size: 0.9rem;
+    }
+
+    main {
+        padding: 0.5rem; /* Reduced main padding */
+    }
+
+    #hero-banner {
+        min-height: 180px; /* Further reduce hero height */
+        padding: 0.8rem;
+        margin-bottom: 1rem;
+    }
+    .hero-content h1 {
+        font-size: 1.4rem; /* Further reduce hero text */
+    }
+    .hero-content p {
+        font-size: 0.85rem;
+    }
+    
+    .checkout-modal {
+        width: 95%; /* Allow modal to use more screen width */
+        min-width: 0; /* Remove min-width constraint */
+        max-height: 95vh; /* Slightly more height if needed */
+    }
+    .checkout-modal-header-ph1 {
+        padding: 10px 15px; /* Reduced modal header padding */
+    }
+    .checkout-modal-header-ph1 h2 {
+        font-size: 1.2em; 
+    }
+    .checkout-modal-body-ph1 {
+        padding: 15px; /* Reduced modal body padding */
+    }
+    .checkout-modal-footer-ph1 {
+        padding: 10px 15px; /* Reduced modal footer padding */
+    }
+    .checkout-modal-footer-ph1 button {
+        padding: 8px 12px; /* Adjust button padding in modal footer */
+        font-size: 0.9rem;
+    }
+
+    #shipping-form input[type="text"],
+    #shipping-form input[type="email"],
+    #new-card-details input[type="text"] {
+        padding: 0.5rem; /* Slightly reduce padding in form inputs */
+        font-size: 0.85rem;
+    }
+
+    .product-card {
+        padding: 0.75rem; /* Reduce padding in product cards */
+    }
+    .product-card h3 {
+        font-size: 1rem;
+    }
+    .product-card .price {
+        font-size: 1rem;
+    }
+    .product-card .description {
+        font-size: 0.8rem;
+    }
+     .product-card button.add-to-cart-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    /* Agent launcher icon might need slight adjustment if it feels too large or obtrusive */
+    #agent-launcher-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5em;
+        bottom: 15px;
+        right: 15px;
+    }
 }

@@ -215,9 +215,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function addToCart(productId, event) { // event parameter might be null if called by agent
-        console.log(`[Product Card Add] Adding product ${productId} to cart. NO ANIMATION from product card click.`);
-        // Animation logic for product card clicks is REMOVED as per plan.
-        // The 'event' parameter is kept for now, but its usage for animation is removed.
+        console.log(`[Product Card Add] Adding product ${productId} to cart. Attempting animation.`);
+
+        if (event && event.target) { // Ensure event and event.target are available for user clicks
+            const sourceElementRect = event.target.getBoundingClientRect();
+            const targetElement = document.getElementById('left-sidebar-cart');
+            if (targetElement) {
+                const targetElementRect = targetElement.getBoundingClientRect();
+                let imageUrl = 'https://via.placeholder.com/150?text=No+Image'; // Default
+                const product = localProductCache[productId];
+                if (product && product.image_url) {
+                    imageUrl = `/${product.image_url}`;
+                } else {
+                    // Fallback: Try to get image from the card DOM
+                    const card = event.target.closest('.product-card');
+                    if (card) {
+                        const imgElement = card.querySelector('img');
+                        if (imgElement && imgElement.src) {
+                            imageUrl = imgElement.src;
+                        }
+                    }
+                }
+                animateItemToCart(sourceElementRect, targetElementRect, imageUrl);
+            } else {
+                console.warn("[Animation] Target cart element 'left-sidebar-cart' not found for user click animation.");
+            }
+        } else {
+            console.log("[Product Card Add] Event or event.target not available, skipping user click animation (likely agent call or test).");
+        }
 
         try {
             await fetchAPI(`/api/cart/${DEFAULT_CUSTOMER_ID}/item`, {
@@ -369,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = product.name || 'Unnamed Product';
         const price = product.price !== null && product.price !== undefined ? parseFloat(product.price).toFixed(2) : 'N/A';
         const description = product.description || 'No description available.';
-        const imageUrl = product.image_url ? `/${product.image_url}` : 'https://via.placeholder.com/150?text=No+Image';
+        const imageUrl = product.image_url ? `/${product.image_url}` : 'https://picsum.photos/seed/productimg/300/300';
         let descSnippet = description.substring(0, isRecommended ? 50 : 100) + (description.length > (isRecommended ? 50 : 100) ? '...' : '');
         
         card.innerHTML =
