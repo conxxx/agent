@@ -1,4 +1,4 @@
-import { startAudioPlayerWorklet, startAudioRecorderWorklet, stopMicrophone } from './js/audio-modules.js';
+import { startAudioPlayerWorklet, startAudioRecorderWorklet, stopMicrophone, pauseMicrophoneInput, resumeMicrophoneInput } from './js/audio-modules.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const agentWidget = document.querySelector('.agent-widget'); 
@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let audioPlayerNode;
     let audioRecorderNode;
     let localMicStream = null;
-
+    let isMicPausedForAgentSpeech = false; // Tracks if mic is paused due to agent speaking
+    let waitingForAgentPlaybackToFinish = false; // Tracks if waiting for agent audio playback to finish
+    
     let currentAgentMessageElement = null;
     let isOverallSessionStart = true; // Tracks if it's the very first interaction in this widget lifecycle
 let initialGreetingSent = false; // Tracks if the first user message/greeting has been sent
@@ -97,7 +99,9 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
     }
 
     async function initializeAndStartAudioCapture() {
-        console.log("[AudioInit] Attempting to start audio capture. Current WS audio mode:", isWsAudioMode);
+        console.log("[AudioInit] Attempting to start audio capture. Current WS audio mode:", isWsAudioMode, "Mic paused for agent speech:", isMicPausedForAgentSpeech);
+        isMicPausedForAgentSpeech = false; // Reset on new capture initialization
+        console.log("[AudioInit] Reset isMicPausedForAgentSpeech to false.");
         if (!isWsAudioMode) { // Should only be called if ws is in audio mode
             console.warn("[AudioInit] Not in WebSocket audio mode. Aborting audio start.");
             return;
@@ -112,6 +116,31 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
                 const [player] = await startAudioPlayerWorklet();
                 audioPlayerNode = player;
                 console.log("[AudioInit] Audio player worklet started.");
+
+                // Setup message handler for playback finished events
+                audioPlayerNode.port.onmessage = (event) => {
+                    if (event.data && event.data.status === 'playback_finished') {
+                        console.log("[AudioPlayer] Playback finished event received.");
+                        waitingForAgentPlaybackToFinish = false;
+                        console.log("[AudioPlayer] waitingForAgentPlaybackToFinish set to false.");
+
+                        if (userDesiredAudioMode && isMicPausedForAgentSpeech) {
+                            console.log("[AudioPlayer] User desires audio and mic was paused for agent. Resuming microphone input.");
+                            if (localMicStream) { // Ensure localMicStream is still valid
+                                resumeMicrophoneInput(localMicStream);
+                                console.log("[AudioPlayer] resumeMicrophoneInput called.");
+                            } else {
+                                console.warn("[AudioPlayer] Cannot resume mic: localMicStream is null after playback finished.");
+                            }
+                            isMicPausedForAgentSpeech = false;
+                            console.log("[AudioPlayer] isMicPausedForAgentSpeech set to false.");
+                        } else {
+                            if (!userDesiredAudioMode) console.log("[AudioPlayer] Playback finished, but userDesiredAudioMode is false. Mic not resumed.");
+                            if (!isMicPausedForAgentSpeech) console.log("[AudioPlayer] Playback finished, but isMicPausedForAgentSpeech was already false. Mic not resumed by this logic.");
+                        }
+                    }
+                };
+                console.log("[AudioInit] Audio player port onmessage handler set up.");
             }
             const [recorder, , stream] = await startAudioRecorderWorklet(adkAudioRecorderHandler);
             audioRecorderNode = recorder;
@@ -136,7 +165,7 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
     }
 
     function stopAudioCaptureAndProcessing() {
-        console.log("[AudioStop] Attempting to stop audio capture.");
+        console.log("[AudioStop] Attempting to stop audio capture. Mic paused for agent speech:", isMicPausedForAgentSpeech);
         // If there's any pending audio in the buffer, send it before stopping
         if (audioChunkBuffer.length > 0) {
             console.log("[AudioStop] Sending remaining buffered audio before stopping...");
@@ -164,6 +193,10 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
             stopMicrophone(localMicStream);
             localMicStream = null;
             console.log("[AudioStop] Microphone stream stopped.");
+        }
+        if (isMicPausedForAgentSpeech) {
+            console.log("[AudioStop] Resetting isMicPausedForAgentSpeech to false as audio capture is stopping.");
+            isMicPausedForAgentSpeech = false;
         }
         // audioRecorderNode and audioPlayerNode are managed by their worklets
         updateMicIcon(false, websocket && websocket.readyState === WebSocket.OPEN);
@@ -327,18 +360,15 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
             // console.log("[WSInternal] onmessage: Parsed data:", parsedData);
 
             if (parsedData.turn_complete === true || parsedData.interrupted === true || parsedData.interaction_completed === true) {
-                currentAgentMessageElement = null;
-                if(parsedData.turn_complete) console.log("[WSInternal] Agent turn_complete.");
-                if(parsedData.interrupted) console.log("[WSInternal] Agent interrupted.");
-                if(parsedData.interaction_completed) {
-                    console.log("[WSInternal] Agent interaction_completed.");
-                    // If interaction is fully completed, maybe switch desired mode to text?
-                    // userDesiredAudioMode = false; 
-                    // stopAudioCaptureAndProcessing();
-                    // showUIMode(false);
-                    // updateMicIcon(false, true);
-                }
-                return;
+                currentAgentMessageElement = null; // Reset current message element
+                if(parsedData.turn_complete) console.log("[WSInternal] Agent turn_complete received. Mic resumption now handled by playback_finished.");
+                if(parsedData.interrupted) console.log("[WSInternal] Agent interrupted received. Mic resumption now handled by playback_finished.");
+                if(parsedData.interaction_completed) console.log("[WSInternal] Agent interaction_completed received. Mic resumption now handled by playback_finished.");
+
+                // DO NOT resume microphone here. It's now handled by the 'playback_finished' event from PCMPlayerProcessor.
+                // This block can still handle other UI updates or state changes if needed.
+                console.log("[WSInternal] Server signal (turn_complete/interrupted/interaction_completed) received. Microphone resumption is now contingent on client-side playback finishing.");
+                return; // End processing for this message
             }
 
             // Preserve non-voice command handling
@@ -396,10 +426,34 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
 
             // Standard content messages
             if (parsedData.mime_type === "audio/pcm" && audioPlayerNode) {
+                console.log("[WSInternal] Received audio/pcm from agent. User desires audio:", userDesiredAudioMode, "Mic stream exists:", !!localMicStream, "Mic paused for agent speech:", isMicPausedForAgentSpeech);
+                // Agent is about to speak, pause microphone input if conditions met
+                if (userDesiredAudioMode && localMicStream && !isMicPausedForAgentSpeech) {
+                    console.log("[WSInternal] Agent audio playback starting. Pausing microphone input.");
+                    pauseMicrophoneInput(localMicStream); // Ensure this function reliably stops sending mic data
+                    isMicPausedForAgentSpeech = true;
+                    console.log("[WSInternal] Microphone input paused. isMicPausedForAgentSpeech set to true.");
+                    waitingForAgentPlaybackToFinish = true;
+                    console.log("[WSInternal] waitingForAgentPlaybackToFinish set to true.");
+                } else {
+                    if (!userDesiredAudioMode) console.log("[WSInternal] Agent audio playback starting, but userDesiredAudioMode is false. Mic not paused.");
+                    if (!localMicStream) console.log("[WSInternal] Agent audio playback starting, but localMicStream is null. Mic not paused.");
+                    if (isMicPausedForAgentSpeech) console.log("[WSInternal] Agent audio playback starting, but isMicPausedForAgentSpeech is already true. Mic not paused again (already paused or waiting).");
+                    // If mic is already paused for agent speech, we might still be waiting for previous playback to finish.
+                    // Ensure waitingForAgentPlaybackToFinish is set if new audio comes in while already paused.
+                    if(isMicPausedForAgentSpeech && !waitingForAgentPlaybackToFinish) {
+                        waitingForAgentPlaybackToFinish = true;
+                        console.log("[WSInternal] New agent audio while already paused, setting waitingForAgentPlaybackToFinish to true.");
+                    }
+                }
+
                 if (typeof parsedData.data === 'string') {
                     const audioData = base64ToArrayBuffer(parsedData.data);
+                    console.log("[WSInternal] Posting audio data to player worklet. Byte length:", audioData.byteLength);
                     audioPlayerNode.port.postMessage(audioData);
-                } else { console.warn("[WSInternal] Audio data not a string."); }
+                } else {
+                    console.warn("[WSInternal] Audio data received from agent is not a string. Cannot play.");
+                }
             } else if (parsedData.mime_type === "text/plain" && typeof parsedData.data === 'string') {
                 // If it's the first chunk for this agent message, create the element.
                 if (!currentAgentMessageElement) {

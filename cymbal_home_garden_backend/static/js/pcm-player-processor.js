@@ -11,6 +11,8 @@ class PCMPlayerProcessor extends AudioWorkletProcessor {
     this.buffer = new Float32Array(this.bufferSize);
     this.writeIndex = 0;
     this.readIndex = 0;
+    this.isPlaying = false; // Initialize isPlaying flag
+    console.log("PCMPlayerProcessor: isPlaying initialized to false.");
 
     // Handle incoming messages from main thread
     this.port.onmessage = (event) => {
@@ -31,6 +33,10 @@ class PCMPlayerProcessor extends AudioWorkletProcessor {
 
   // Push incoming Int16 data into our ring buffer.
   _enqueue(int16Samples) {
+    if (!this.isPlaying && int16Samples.length > 0) {
+      this.isPlaying = true;
+      console.log("PCMPlayerProcessor: Playback starting, isPlaying set to true.");
+    }
     for (let i = 0; i < int16Samples.length; i++) {
       // Convert 16-bit integer to float in [-1, 1]
       const floatVal = int16Samples[i] / 32768;
@@ -63,7 +69,15 @@ class PCMPlayerProcessor extends AudioWorkletProcessor {
         }
         this.readIndex = (this.readIndex + 1) % this.bufferSize;
       } else {
-        // Buffer is empty, output silence
+        // Buffer is empty
+        if (this.isPlaying) {
+          // If it was playing and buffer is now empty, playback has finished
+          this.port.postMessage({ status: 'playback_finished' });
+          console.log("PCMPlayerProcessor: Playback finished, posted 'playback_finished' message.");
+          this.isPlaying = false;
+          console.log("PCMPlayerProcessor: isPlaying set to false.");
+        }
+        // Output silence
         for (let channel = 0; channel < output.length; channel++) {
           output[channel][frame] = 0;
         }

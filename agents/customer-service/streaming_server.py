@@ -86,45 +86,61 @@ app.add_middleware(
 )
 
 async def start_agent_session(session_id: str, is_audio: bool):
+    logger.info(f"[DIAG_LOG] start_agent_session called for session_id: {session_id}, is_audio: {is_audio}")
     if not CUSTOMER_SERVICE_AGENT_LOADED or customer_service_agent is None:
-        logger.error("customer_service_agent is not loaded. Cannot start runner.")
+        logger.error(f"[DIAG_LOG] customer_service_agent is not loaded. Cannot start runner for session_id: {session_id}.")
         raise RuntimeError("Customer service agent could not be loaded.")
 
     session_service = InMemorySessionService()
     app_name_str = "cymbal_home_garden_streaming_chat"
     user_id_str = f"user_{session_id}"
-
+    
+    logger.info(f"[DIAG_LOG] Attempting to get/create session for session_id: {session_id}")
     session_obj: ADKSessionType = session_service.get_session(
         app_name=app_name_str, user_id=user_id_str, session_id=session_id
     )
     if not session_obj:
+        logger.info(f"[DIAG_LOG] No existing session found for session_id: {session_id}. Creating new one.")
         session_obj = session_service.create_session(
             app_name=app_name_str, user_id=user_id_str, session_id=session_id
         )
-    if not session_obj:
-        logger.error(f"Critical error: Failed to create or retrieve session for {session_id}")
+        if session_obj:
+            logger.info(f"[DIAG_LOG] New session created for session_id: {session_id}, session_obj_id: {id(session_obj)}")
+        else:
+            logger.error(f"[DIAG_LOG] Critical error: Failed to create session for {session_id}")
+            raise RuntimeError(f"Session object is None after creation attempt for {session_id}")
+    else:
+        logger.info(f"[DIAG_LOG] Existing session retrieved for session_id: {session_id}, session_obj_id: {id(session_obj)}")
+
+    if not session_obj: # Should be redundant due to checks above, but as a safeguard
+        logger.error(f"[DIAG_LOG] Critical error: session_obj is None for {session_id} before runner init.")
         raise RuntimeError(f"Session object is None for {session_id}")
 
     runner = Runner(agent=customer_service_agent, app_name=app_name_str, session_service=session_service)
     live_request_queue = LiveRequestQueue()
+    logger.info(f"[DIAG_LOG] Created LiveRequestQueue for session_id: {session_id}, queue_id: {id(live_request_queue)}")
     
     run_config = RunConfig(
         response_modalities=["AUDIO"] if is_audio else ["TEXT"],
     )
     
+    logger.info(f"[DIAG_LOG] Calling runner.run_live for session_id: {session_id}, session_obj_id: {id(session_obj)}")
     live_events = runner.run_live(
-        session=session_obj, 
+        session=session_obj,
         live_request_queue=live_request_queue,
         run_config=run_config,
     )
+    logger.info(f"[DIAG_LOG] runner.run_live completed for session_id: {session_id}, live_events_iterator_id: {id(live_events)}")
+    logger.info(f"[DIAG_LOG] start_agent_session completed successfully for session_id: {session_id}")
     return live_events, live_request_queue
 
 # Rewritten agent_to_client_messaging based on ADK documentation
 async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id: str):
-    logger.info(f"Starting agent_to_client_messaging for session: {session_id}")
+    logger.info(f"[DIAG_LOG S2C] Start agent_to_client_messaging for session: {session_id}, events_iter_id: {id(events_iter)}")
     try:
         async for agent_event in events_iter:
-            logger.info(f"[S2C {session_id}] Raw agent event from events_iter: {agent_event}")
+            event_type_str = f"type: {type(agent_event).__name__}"
+            logger.info(f"[DIAG_LOG S2C {session_id}] Received agent_event ({event_type_str})")
 
             is_turn_complete = getattr(agent_event, 'turn_complete', False)
             is_interrupted = getattr(agent_event, 'interrupted', False)
@@ -136,14 +152,13 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                     "interrupted": is_interrupted,
                     "interaction_completed": is_interaction_completed,
                 }
-                logger.info(f"[S2C {session_id}] Sending status: {status_message}")
+                logger.info(f"[DIAG_LOG S2C {session_id}] Sending status: {status_message}")
                 await ws.send_json(status_message)
-                # Crucial: continue to next event after sending status, as per ADK docs
-                continue 
+                continue
             
             server_content = getattr(agent_event, 'server_content', None) or getattr(agent_event, 'content', None)
             if not server_content:
-                # logger.debug(f"[S2C DEBUG {session_id}] Event has no server_content or content.")
+                logger.info(f"[DIAG_LOG S2C {session_id}] Event has no server_content. Skipping.")
                 continue
 
             # --- Start: Preserve existing non-voice command handling ---
@@ -161,11 +176,11 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
             if theme_action_details:
                 theme_value = theme_action_details.get("theme")
                 if theme_value:
-                    logger.info(f"[S2C {session_id}] Handling 'set_theme' action: {theme_value}")
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'set_theme': {theme_value}")
                     await ws.send_json({"type": "command", "command_name": "set_theme", "payload": {"theme": theme_value}})
                     continue
                 else:
-                    logger.warning(f"[S2C {session_id}] 'set_theme' action missing theme value.")
+                    logger.warning(f"[DIAG_LOG S2C {session_id}] 'set_theme' action missing value.")
                     continue
             
             # Check for cart refresh instruction
@@ -180,7 +195,7 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                 cart_refresh_action = True
 
             if cart_refresh_action:
-                logger.info(f"[S2C {session_id}] Handling 'refresh_cart' action.")
+                logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'refresh_cart'")
                 await ws.send_json({"type": "command", "command_name": "refresh_cart"})
                 continue
 
@@ -196,7 +211,7 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                  product_recommendation_dict = server_content
             
             if product_recommendation_dict:
-                logger.info(f"[S2C {session_id}] Handling 'product_recommendations'.")
+                logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'product_recommendations'")
                 await ws.send_text(json.dumps(product_recommendation_dict)) # Client expects raw JSON string for this
                 continue
 
@@ -212,9 +227,8 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                 checkout_modal_action = server_content
             
             if checkout_modal_action:
-                logger.info(f"[S2C {session_id}] Handling 'trigger_checkout_modal' action.")
+                logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'trigger_checkout_modal'")
                 await ws.send_json({"type": "command", "command_name": "trigger_checkout_modal", "payload": checkout_modal_action})
-                logger.info(f"[S2C {session_id}] Sent 'trigger_checkout_modal' command to client with payload: {checkout_modal_action}")
                 continue
 
             # Check for generic ui_command
@@ -235,19 +249,18 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                         "command_name": tool_response_dict.get("ui_element"),
                         "payload": tool_response_dict.get("payload")
                     }
-                    logger.info(f"[S2C {session_id}] Handling direct 'display_ui' tool response: {direct_ui_command_payload}")
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling direct 'display_ui' tool response: {direct_ui_command_payload.get('command_name')}")
                     await ws.send_json(direct_ui_command_payload)
                     continue # Command handled
 
             # ADK Documentation style for content parts (text/audio)
-            # This part is reached if the event was not a status update or a handled custom command.
             part: Optional[_PartType] = (
                 server_content.parts[0]
                 if hasattr(server_content, 'parts') and server_content.parts
                 else None
             )
             if not part:
-                # logger.debug(f"[S2C DEBUG {session_id}] Event content has no parts or is not structured as expected for text/audio.")
+                logger.info(f"[DIAG_LOG S2C {session_id}] No parts in server_content. Skipping.")
                 continue
 
             # Check for generic ui_command using the correctly defined 'part' (e.g. from LLM text output)
@@ -263,241 +276,223 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                     pass
                 except Exception as e:
                     # Catch any other unexpected errors during parsing or checking
-                    logger.error(f"[S2C {session_id}] Error processing potential ui_command in part.text: {e}", exc_info=True)
+                    logger.error(f"[DIAG_LOG S2C {session_id}] Error processing ui_command in part.text: {e}", exc_info=True)
 
             if ui_command_details_from_text:
-                # This section seems to have specific interception logic, keeping it for now.
-                if ui_command_details_from_text.get("command_name") == "display_shipping_options_ui":
-                    logger.info(f"[S2C {session_id}] Intercepted 'display_shipping_options_ui' from text, sending 'initiate_checkout' to client.")
-                    await ws.send_json({"type": "initiate_checkout"}) # This seems like old logic, might need review
+                command_name = ui_command_details_from_text.get("command_name", "Unknown UI Command")
+                logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'ui_command' from text: {command_name}")
+                if command_name == "display_shipping_options_ui":
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Intercepted '{command_name}', sending 'initiate_checkout'.")
+                    await ws.send_json({"type": "initiate_checkout"})
                 else:
-                    logger.info(f"[S2C {session_id}] Handling generic 'ui_command' from part.text: {ui_command_details_from_text}")
-                    await ws.send_json(ui_command_details_from_text) # Send the original ui_command
-                continue # Command handled, move to next agent_event
+                    await ws.send_json(ui_command_details_from_text)
+                continue
             
-            # If not a ui_command from text, proceed to send as text or audio
             message_to_send = None
-            if part.text: # Check for text first (and it wasn't a ui_command from text)
+            if part.text:
                 message_to_send = {"mime_type": "text/plain", "data": part.text}
-                logger.info(f"[S2C {session_id}] Sending text: {part.text[:50]}...")
-            elif part.inline_data and part.inline_data.mime_type == "audio/pcm": # Check for audio/pcm
+                logger.info(f"[DIAG_LOG S2C {session_id}] Sending text: '{part.text[:70]}...'")
+            elif part.inline_data and part.inline_data.mime_type == "audio/pcm":
                 audio_data = part.inline_data.data
                 if audio_data:
                     base64_encoded_audio = base64.b64encode(audio_data).decode("ascii")
-                    message_to_send = {
-                        "mime_type": "audio/pcm",
-                        "data": base64_encoded_audio
-                        # No "encoding": "base64" field needed as per ADK client example, client decodes based on mime_type
-                    }
-                    logger.info(f"[S2C {session_id}] Sending audio/pcm: {len(audio_data)} bytes raw, {len(base64_encoded_audio)} chars b64.")
+                    message_to_send = {"mime_type": "audio/pcm", "data": base64_encoded_audio}
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Sending audio/pcm: {len(audio_data)} bytes raw.")
+                else:
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Audio part present but data is empty.")
             
             if message_to_send:
                 await ws.send_json(message_to_send)
-            # else:
-                # logger.debug(f"[S2C DEBUG {session_id}] No text or audio/pcm data found in part: {part}")
+            else:
+                logger.info(f"[DIAG_LOG S2C {session_id}] No text or audio/pcm data in part to send.")
 
     except WebSocketDisconnect:
-        logger.info(f"S2C: WebSocket disconnected for session: {session_id}")
+        logger.info(f"[DIAG_LOG S2C] WebSocket disconnected for session: {session_id}")
     except asyncio.CancelledError:
-        logger.info(f"S2C: Task cancelled for session: {session_id}")
+        logger.info(f"[DIAG_LOG S2C] Task cancelled for session: {session_id}")
     except Exception as e:
-        logger.error(f"S2C: Error in agent_to_client_messaging for session {session_id}: {e}", exc_info=True)
+        logger.error(f"[DIAG_LOG S2C] Error in agent_to_client_messaging for session {session_id}: {e}", exc_info=True)
     finally:
-        logger.info(f"S2C: Agent messaging finished for session: {session_id}")
+        logger.info(f"[DIAG_LOG S2C] Agent messaging finished for session: {session_id}")
 
 # Rewritten client_to_agent_messaging based on ADK documentation
 async def client_to_agent_messaging(ws: WebSocket, queue_to_agent: LiveRequestQueue, session_id: str):
-    logger.info(f"Starting client_to_agent_messaging for session: {session_id}")
+    logger.info(f"[DIAG_LOG C2S] Start client_to_agent_messaging for session: {session_id}, queue_id: {id(queue_to_agent)}")
     try:
         while True:
+            logger.info(f"[DIAG_LOG C2S {session_id}] Waiting for client message...")
             raw_client_message = await ws.receive_text()
+            # Avoid logging full raw_client_message if it's very long (e.g., audio data)
+            log_msg_summary = raw_client_message[:200] + ('...' if len(raw_client_message) > 200 else '')
+            logger.info(f"[DIAG_LOG C2S {session_id}] Received raw message (len: {len(raw_client_message)}): '{log_msg_summary}'")
+            
             try:
                 client_message_json = json.loads(raw_client_message)
-                logger.info(f"[C2S {session_id}] Raw client message received and parsed: {client_message_json}")
             except json.JSONDecodeError:
-                logger.error(f"[C2S {session_id}] Failed to decode JSON from client: {raw_client_message}", exc_info=True)
-                continue # Skip this message
+                logger.error(f"[DIAG_LOG C2S {session_id}] Failed to decode JSON from client.", exc_info=True)
+                continue
 
             if "parts" in client_message_json:
-                logger.info(f"[C2S {session_id}] Detected 'parts' array in client message. Processing as multimodal.")
+                logger.info(f"[DIAG_LOG C2S {session_id}] Processing 'parts' array.")
                 parts_for_adk = []
                 valid_parts_assembly = True
+                client_parts_data = client_message_json.get("parts", [])
+
+                for i, part_data in enumerate(client_parts_data):
+                    part_mime_type = part_data.get("mime_type")
+                    part_content_data = part_data.get("data")
+
+                    if not part_mime_type or part_content_data is None:
+                        logger.warning(f"[DIAG_LOG C2S {session_id}] Invalid part {i} (missing mime_type/data).")
+                        valid_parts_assembly = False; break
+                    
+                    data_len_str = f"len: {len(part_content_data)}" if isinstance(part_content_data, (str, bytes)) else "type: non-str/bytes"
+                    logger.info(f"[DIAG_LOG C2S {session_id}] Part {i}: mime='{part_mime_type}', {data_len_str}")
+
+                    if part_mime_type.startswith("image/"):
+                        try:
+                            decoded_bytes = base64.b64decode(part_content_data)
+                            parts_for_adk.append(Part(inline_data=Blob(mime_type=part_mime_type, data=decoded_bytes)))
+                        except Exception as e:
+                            logger.error(f"[DIAG_LOG C2S {session_id}] Error decoding image part {i}: {e}", exc_info=True)
+                            valid_parts_assembly = False; break
+                    elif part_mime_type == "text/plain":
+                        parts_for_adk.append(Part(text=str(part_content_data)))
+                    else:
+                        logger.warning(f"[DIAG_LOG C2S {session_id}] Unsupported mime_type '{part_mime_type}' in part {i}.")
                 
-                client_parts_data = client_message_json.get("parts")
-                if not isinstance(client_parts_data, list) or not client_parts_data:
-                    logger.warning(f"[C2S {session_id}] 'parts' key found but it's not a non-empty list or is missing: {client_parts_data}")
-                    valid_parts_assembly = False
-                
-                if valid_parts_assembly:
-                    for part_data in client_parts_data:
-                        if not isinstance(part_data, dict):
-                            logger.warning(f"[C2S {session_id}] Invalid part structure (not a dict) in 'parts' array: {part_data}")
-                            valid_parts_assembly = False
-                            break
+                if valid_parts_assembly and parts_for_adk:
+                    adk_content_obj = Content(role="user", parts=parts_for_adk)
+                    logger.info(f"[DIAG_LOG C2S {session_id}] Sending {len(parts_for_adk)} parts to agent queue.")
+                    queue_to_agent.send_content(content=adk_content_obj)
+                elif not valid_parts_assembly:
+                    logger.warning(f"[DIAG_LOG C2S {session_id}] Not sending to agent due to invalid parts.")
+                else: # valid_parts_assembly is true, but parts_for_adk is empty
+                    logger.warning(f"[DIAG_LOG C2S {session_id}] No processable parts found, nothing to send.")
 
-                        part_mime_type = part_data.get("mime_type")
-                        # Client sends 'data' for the content within each part.
-                        part_content_data = part_data.get("data")
-
-                        if not part_mime_type or part_content_data is None:
-                            logger.warning(f"[C2S {session_id}] Invalid part received in 'parts' array (missing mime_type or data): {part_data}")
-                            valid_parts_assembly = False
-                            break
-                        
-                        data_length_info = len(part_content_data) if isinstance(part_content_data, (str, bytes)) else 'N/A (not str/bytes)'
-                        logger.info(f"[C2S {session_id}] Processing part from 'parts' array: mime_type='{part_mime_type}', data_length='{data_length_info}'")
-
-                        if part_mime_type.startswith("image/"):
-                            try:
-                                decoded_bytes = base64.b64decode(part_content_data)
-                                parts_for_adk.append(Part(inline_data=Blob(mime_type=part_mime_type, data=decoded_bytes)))
-                                logger.info(f"[C2S {session_id}] Successfully processed image part: mime_type='{part_mime_type}', decoded_bytes_length={len(decoded_bytes)}")
-                            except base64.binascii.Error as e:
-                                logger.error(f"[C2S {session_id}] Error decoding base64 image data for part {part_data}: {e}", exc_info=True)
-                                valid_parts_assembly = False
-                                break
-                            except Exception as e:
-                                logger.error(f"[C2S {session_id}] Generic error processing image part {part_data}: {e}", exc_info=True)
-                                valid_parts_assembly = False
-                                break
-                        elif part_mime_type == "text/plain":
-                            # Assuming text data in 'parts' is plain string, not base64 encoded by client.
-                            parts_for_adk.append(Part(text=str(part_content_data)))
-                            logger.info(f"[C2S {session_id}] Successfully processed text part: '{str(part_content_data)[:100]}...'")
-                        else:
-                            logger.warning(f"[C2S {session_id}] Unsupported mime_type '{part_mime_type}' in 'parts' array. Skipping part: {part_data}")
-                            # To be strict, an unsupported part could invalidate the whole message:
-                            # valid_parts_assembly = False
-                            # break
-                            # Or, to be more lenient, just skip this part (current behavior by not breaking/setting false)
-
-                    if valid_parts_assembly and parts_for_adk:
-                        logger.info(f"[C2S {session_id}] Assembled {len(parts_for_adk)} parts for ADK. Constructing Content object.")
-                        adk_content_obj = Content(role="user", parts=parts_for_adk)
-                        queue_to_agent.send_content(content=adk_content_obj)
-                        logger.info(f"[C2S {session_id}] Successfully sent Content object with {len(parts_for_adk)} parts to agent queue.")
-                    elif not parts_for_adk and valid_parts_assembly: # No processable parts were found
-                         logger.warning(f"[C2S {session_id}] No processable parts found in 'parts' array after processing, nothing to send to agent.")
-                    elif not valid_parts_assembly: # An error occurred during part processing
-                        logger.warning(f"[C2S {session_id}] Not sending to agent queue due to invalid or empty assembled parts from 'parts' array.")
-
-            # Fallback to existing logic if "parts" is not present OR if "parts" was empty/invalid from the start
             elif "mime_type" in client_message_json:
-                logger.info(f"[C2S {session_id}] No 'parts' array or invalid 'parts' array in message. Falling back to mime_type/data processing.")
                 mime_type = client_message_json.get("mime_type")
                 data = client_message_json.get("data")
+                logger.info(f"[DIAG_LOG C2S {session_id}] Fallback: mime_type='{mime_type}', data_len={len(data) if data else 'None'}")
 
-                if not mime_type or data is None: # Ensure data is not None, can be empty string for text
-                    logger.warning(f"[C2S {session_id}] Received message with missing mime_type or data (fallback path): {client_message_json}")
+                if not mime_type or data is None:
+                    logger.warning(f"[DIAG_LOG C2S {session_id}] Fallback: Missing mime_type or data.")
                     continue
 
                 if mime_type == "text/plain":
-                    logger.info(f"[C2S {session_id}] Processing text from client (fallback path): '{str(data)[:50]}...'")
-                    # If the message is just "client_ready", skip sending it to the agent
-                    if str(data) == "client_ready":
-                        logger.info(f"[C2S {session_id}] Received 'client_ready' message. Ignoring for agent processing.")
+                    text_data = str(data)
+                    if text_data == "client_ready":
+                        logger.info(f"[DIAG_LOG C2S {session_id}] Received 'client_ready'. Ignoring.")
                         continue
-                    content = Content(role="user", parts=[Part.from_text(text=str(data))])
-                    logger.info(f"[C2S {session_id}] DEBUG: Text message being added to agent queue: {content}")
+                    content = Content(role="user", parts=[Part.from_text(text=text_data)])
+                    logger.info(f"[DIAG_LOG C2S {session_id}] Sending text (fallback) to agent: '{text_data[:70]}...'")
                     queue_to_agent.send_content(content=content)
                 elif mime_type == "audio/pcm":
-                    logger.info(f"[C2S {session_id}] Processing audio/pcm from client (fallback path), data length (base64): {len(data)}")
                     try:
-                        base64_audio_str = str(data)
-                        decoded_audio_bytes = base64.b64decode(base64_audio_str)
-                        logger.info(f"[C2S {session_id}] Length of decoded_audio_bytes (fallback path): {len(decoded_audio_bytes)}")
+                        decoded_audio_bytes = base64.b64decode(str(data))
+                        logger.info(f"[DIAG_LOG C2S {session_id}] Sending audio (fallback) to agent: {len(decoded_audio_bytes)} bytes.")
                         queue_to_agent.send_realtime(Blob(data=decoded_audio_bytes, mime_type="audio/pcm"))
-                    except base64.binascii.Error as b64_error:
-                        logger.error(f"[C2S {session_id}] Error decoding base64 audio data (fallback path): {b64_error}", exc_info=True)
-                        continue
                     except Exception as e:
-                        logger.error(f"[C2S {session_id}] Generic error processing audio data (fallback path): {e}", exc_info=True)
+                        logger.error(f"[DIAG_LOG C2S {session_id}] Error decoding/sending audio (fallback): {e}", exc_info=True)
                         continue
                 elif mime_type.startswith("image/"):
-                    logger.warning(f"[C2S {session_id}] Processing image from client (fallback path - this is unexpected if client supports 'parts' array): mime_type: {mime_type}")
                     try:
                         decoded_image_bytes = base64.b64decode(str(data))
-                        logger.info(f"[C2S {session_id}] Length of decoded_image_bytes (fallback path): {len(decoded_image_bytes)}")
                         image_blob = Blob(data=decoded_image_bytes, mime_type=mime_type)
                         content = Content(role="user", parts=[Part(inline_data=image_blob)])
+                        logger.info(f"[DIAG_LOG C2S {session_id}] Sending image (fallback) to agent: {mime_type}, {len(decoded_image_bytes)} bytes.")
                         queue_to_agent.send_content(content=content)
-                        logger.info(f"[C2S {session_id}] Image content sent to agent queue (fallback path).")
-                    except base64.binascii.Error as b64_error:
-                        logger.error(f"[C2S {session_id}] Error decoding base64 image data (fallback path): {b64_error}", exc_info=True)
-                        continue
                     except Exception as e:
-                        logger.error(f"[C2S {session_id}] Generic error processing image data (fallback path): {e}", exc_info=True)
+                        logger.error(f"[DIAG_LOG C2S {session_id}] Error decoding/sending image (fallback): {e}", exc_info=True)
                         continue
                 else:
-                    logger.warning(f"[C2S {session_id}] Received unhandled mime_type ('{mime_type}') from client (fallback path): {client_message_json}")
+                    logger.warning(f"[DIAG_LOG C2S {session_id}] Fallback: Unhandled mime_type '{mime_type}'.")
             else:
-                logger.warning(f"[C2S {session_id}] Unknown message structure (no 'parts' or 'mime_type' found at top level): {client_message_json}")
+                logger.warning(f"[DIAG_LOG C2S {session_id}] Unknown message structure: {client_message_json}")
 
     except WebSocketDisconnect:
-        logger.info(f"C2S: WebSocket disconnected for session: {session_id}")
+        logger.info(f"[DIAG_LOG C2S] WebSocket disconnected for session: {session_id}")
     except asyncio.CancelledError:
-        logger.info(f"C2S: Task cancelled for session: {session_id}")
+        logger.info(f"[DIAG_LOG C2S] Task cancelled for session: {session_id}")
     except Exception as e:
-        logger.error(f"C2S: Error in client_to_agent_messaging for session {session_id}: {e}", exc_info=True)
+        logger.error(f"[DIAG_LOG C2S] Error in client_to_agent_messaging for session {session_id}: {e}", exc_info=True)
     finally:
-        logger.info(f"C2S: Client messaging finished for session: {session_id}")
+        logger.info(f"[DIAG_LOG C2S] Client messaging finished for session: {session_id}")
 
 
 @app.websocket("/ws/agent_stream/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str, is_audio: bool = False):
-    logger.info(f"WebSocket connection attempt for session: {session_id}, is_audio: {is_audio}")
+    logger.info(f"[DIAG_LOG] WebSocket connection attempt for session_id: {session_id}, is_audio: {is_audio}, client: {websocket.client}")
     
     try:
         await websocket.accept()
-        logger.info(f"WebSocket connection accepted for session: {session_id}, is_audio: {is_audio}")
+        logger.info(f"[DIAG_LOG] WebSocket connection accepted for session_id: {session_id}, is_audio: {is_audio}, client: {websocket.client}")
     except WebSocketDisconnect:
-        logger.warning(f"WebSocket disconnected before/during accept for session: {session_id}")
-        return 
+        logger.warning(f"[DIAG_LOG] WebSocket disconnected before/during accept for session_id: {session_id}, client: {websocket.client}")
+        return
     except Exception as e:
-        logger.error(f"Error accepting WebSocket for session {session_id}: {e}", exc_info=True)
-        # Attempt to close gracefully if possible, though state might be bad
+        logger.error(f"[DIAG_LOG] Error accepting WebSocket for session_id: {session_id}, client: {websocket.client}: {e}", exc_info=True)
         if websocket.client_state != WebSocketState.DISCONNECTED:
-            try: await websocket.close(code=1011) 
-            except: pass # Ignore errors during close after accept failure
+            try:
+                logger.info(f"[DIAG_LOG] Attempting to close WebSocket due to accept error for session_id: {session_id}")
+                await websocket.close(code=1011)
+            except Exception as close_e:
+                 logger.error(f"[DIAG_LOG] Error closing WebSocket after accept error for session_id: {session_id}: {close_e}", exc_info=True)
         return
 
     live_events_iterator = None
     agent_send_queue = None
     agent_task = None
     client_task = None
+    logger.info(f"[DIAG_LOG] Initialized task variables to None for session_id: {session_id}")
 
     try:
+        logger.info(f"[DIAG_LOG] Attempting to start_agent_session for session_id: {session_id}")
         live_events_iterator, agent_send_queue = await start_agent_session(session_id, is_audio)
+        logger.info(f"[DIAG_LOG] start_agent_session successful for session_id: {session_id}. Iterator_id: {id(live_events_iterator)}, Queue_id: {id(agent_send_queue)}")
 
+        agent_task_name = f"agent_to_client_{session_id}_{id(live_events_iterator)}"
         agent_task = asyncio.create_task(agent_to_client_messaging(websocket, live_events_iterator, session_id))
-        agent_task.set_name(f"agent_to_client_{session_id}")
+        agent_task.set_name(agent_task_name)
+        logger.info(f"[DIAG_LOG] Created agent_task: {agent_task_name} for session_id: {session_id}")
         
+        client_task_name = f"client_to_agent_{session_id}_{id(agent_send_queue)}"
         client_task = asyncio.create_task(client_to_agent_messaging(websocket, agent_send_queue, session_id))
-        client_task.set_name(f"client_to_agent_{session_id}")
+        client_task.set_name(client_task_name)
+        logger.info(f"[DIAG_LOG] Created client_task: {client_task_name} for session_id: {session_id}")
 
+        logger.info(f"[DIAG_LOG] Awaiting completion of tasks for session_id: {session_id}: {agent_task_name}, {client_task_name}")
         done, pending = await asyncio.wait(
             [agent_task, client_task],
             return_when=asyncio.FIRST_COMPLETED,
         )
+        logger.info(f"[DIAG_LOG] asyncio.wait completed for session_id: {session_id}. Done tasks: {[t.get_name() for t in done]}. Pending tasks: {[t.get_name() for t in pending]}.")
 
         for task_done in done:
+            task_name = task_done.get_name()
             try:
-                task_done.result() 
+                task_done.result()
+                logger.info(f"[DIAG_LOG] Task {task_name} completed normally for session_id: {session_id}.")
             except asyncio.CancelledError:
-                 logger.info(f"Task {task_done.get_name()} was cancelled for session {session_id}.")
+                 logger.info(f"[DIAG_LOG] Task {task_name} was cancelled for session_id: {session_id}.")
+            except WebSocketDisconnect:
+                 logger.info(f"[DIAG_LOG] Task {task_name} encountered WebSocketDisconnect for session_id: {session_id}.")
             except Exception as e:
-                logger.error(f"Task {task_done.get_name()} completed with error for session {session_id}: {e}", exc_info=True)
+                logger.error(f"[DIAG_LOG] Task {task_name} completed with error for session_id: {session_id}: {e}", exc_info=True)
 
         for task_pending in pending:
-            logger.info(f"Cancelling pending task: {task_pending.get_name()} for session: {session_id}")
+            task_name = task_pending.get_name()
+            logger.info(f"[DIAG_LOG] Cancelling pending task: {task_name} for session_id: {session_id}")
             task_pending.cancel()
         
         if pending:
+            logger.info(f"[DIAG_LOG] Gathering cancelled pending tasks for session_id: {session_id}")
             await asyncio.gather(*pending, return_exceptions=True)
+            logger.info(f"[DIAG_LOG] Finished gathering cancelled pending tasks for session_id: {session_id}")
 
     except WebSocketDisconnect:
-        logger.info(f"WebSocket disconnected in main endpoint for session: {session_id}")
-    except RuntimeError as e: 
+        logger.info(f"[DIAG_LOG] WebSocket disconnected in main endpoint for session_id: {session_id}, client: {websocket.client}")
+    except RuntimeError as e:
         logger.error(f"Runtime error in WebSocket endpoint for session {session_id}: {e}", exc_info=True)
         if websocket.client_state != WebSocketState.DISCONNECTED:
             try: await websocket.send_json({"error": str(e), "type": "RuntimeError"})

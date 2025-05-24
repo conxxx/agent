@@ -139,3 +139,37 @@ function convertFloat32ToPCM(inputData) {
   }
   return pcm16.buffer;
 }
+
+/**
+ * Pause microphone input by disabling audio tracks.
+ * @param {MediaStream} micStream - The microphone stream.
+ */
+export function pauseMicrophoneInput(micStream) {
+  if (micStream && micStream.getTracks) {
+    micStream.getTracks().forEach((track) => {
+      if (track.kind === 'audio') {
+        track.enabled = false;
+        console.log("[AudioModule] Microphone track disabled (paused). ID:", track.id, "Current enabled state:", track.enabled);
+      }
+    });
+  } else {
+    console.warn("[AudioModule] pauseMicrophoneInput: micStream not available or no tracks to pause.");
+  }
+}
+
+/**
+ * Resume microphone input by enabling audio tracks.
+ * @param {MediaStream} micStream - The microphone stream.
+ */
+export function resumeMicrophoneInput(micStream) {
+  if (micStream && micStream.getTracks) {
+    micStream.getTracks().forEach((track) => {
+      if (track.kind === 'audio') {
+        track.enabled = true;
+        console.log("[AudioModule] Microphone track enabled (resumed). ID:", track.id, "Current enabled state:", track.enabled);
+      }
+    });
+  } else {
+    console.warn("[AudioModule] resumeMicrophoneInput: micStream not available or no tracks to resume.");
+  }
+}
