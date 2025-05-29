@@ -55,14 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Checkout Modal (Sidebar) DOM Elements - REMOVED
-    // const checkoutModalPh1 = document.getElementById('checkout-modal-ph1');
-    // const checkoutModalTitlePh1 = document.getElementById('checkout-modal-title-ph1');
-    // const checkoutModalBodyPh1 = document.getElementById('checkout-modal-body-ph1');
-    // const closeCheckoutModalBtnPh1 = document.getElementById('checkout-modal-close-ph1');
-    // const cancelCheckoutBtnPh1 = document.getElementById('checkout-cancel-btn-ph1');
-    // const backCheckoutBtnPh1 = document.getElementById('checkout-back-btn-ph1');
-    // const nextCheckoutBtnPh1 = document.getElementById('checkout-next-btn-ph1');
-
     const DEFAULT_CUSTOMER_ID = "123";
     if(currentCustomerIdSpan) currentCustomerIdSpan.textContent = DEFAULT_CUSTOMER_ID;
 
@@ -77,10 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Partner Locker Hub', address: '456 Pine Rd, Anytown, USA' }
     ];
     let currentShippingSelection = {};
-
-
-    // let checkoutProcessState = { ... }; // REMOVED
-    // console.log("[Checkout] Initial checkoutProcessState:", JSON.parse(JSON.stringify(checkoutProcessState))); // REMOVED
 
     // --- Left Sidebar Cart Logic ---
     function toggleCartSidebar() {
@@ -536,6 +524,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const orderIdMessage = event.data.data?.order_id ? ` Order ID: ${event.data.data.order_id}` : "";
             alert(confirmationMessage + orderIdMessage); 
             // TODO: Replace alert with a more integrated UI notification
+        } else if (event.data.type === 'agent_initiated_checkout_cancel') {
+            console.log("[Main Page] Received 'agent_initiated_checkout_cancel' from widget.");
+            if (checkoutReviewModal && checkoutReviewModal.style.display !== 'none') {
+                closeCheckoutReviewModal(); // This will also trigger state reset and postMessage
+            }
+            if (checkoutShippingModal && checkoutShippingModal.style.display !== 'none') {
+                closeCheckoutShippingModal(); // This will also trigger state reset and postMessage
+            }
+            if (checkoutPaymentModal && checkoutPaymentModal.style.display !== 'none') {
+                closeCheckoutPaymentModal(); // This will also trigger state reset and postMessage
+            }
+            // Explicitly reset state here as well, in case no modal was open or for clarity
+            currentShippingSelection = {};
+            cachedCartDataForModals = null;
+            console.log("[Main Page] Checkout state reset due to agent-initiated cancellation.");
         } else {
             console.log("[Main Page] Received message not handled by current logic:", event.data);
         }
@@ -543,35 +546,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDisplayUiComponent(uiElement, payload) { // uiElement here is actually command_name
         console.log(`[Main Page] handleDisplayUiComponent called with command_name (as uiElement): ${uiElement}, payload:`, payload);
-        // showCheckoutModalPh1(); // REMOVED - Checkout modal functionality is being removed
 
         switch (uiElement) { // uiElement here is actually command_name
-            // case "checkout_item_selection": // REMOVED
-            //     // renderCheckoutStep1ItemSelection(payload && payload.items ? payload.items : currentCartItemsData); // Function to be removed
-            //     break;
-            // case "shipping_options": // REMOVED
-            //     // renderShippingStep(); // Function to be removed
-            //     break;
-            // case "pickup_locations": // REMOVED
-            //     // checkoutProcessState.shippingInfo.previousPickupLocations = payload && payload.locations ? payload.locations : []; // State removed
-            //     // renderPickupLocationsStep(checkoutProcessState.shippingInfo.previousPickupLocations); // Function to be removed
-            //     console.log("[Main Page] Received 'pickup_locations' UI command - functionality removed.");
-            //     break;
-            // case "payment_methods": // REMOVED
-            //     // checkoutProcessState.paymentInfo.previousPaymentMethods = payload && payload.methods ? payload.methods : []; // State removed
-            //     // renderPaymentStep(checkoutProcessState.paymentInfo.previousPaymentMethods); // Function to be removed
-            //     console.log("[Main Page] Received 'payment_methods' UI command - functionality removed.");
-            //     break;
-            // case "order_confirmation": // REMOVED
-            //     // const orderId = payload && payload.details && payload.details.orderId ? payload.details.orderId : (payload && payload.details ? JSON.stringify(payload.details) : "N/A");
-            //     // renderOrderConfirmationStep(orderId); // Function to be removed
-            //     console.log("[Main Page] Received 'order_confirmation' UI command - functionality removed.");
-            //     break;
             default:
                 console.error(`[Main Page] Unknown/unhandled uiElement received in handleDisplayUiComponent: ${uiElement}`);
-                // if (checkoutModalBodyPh1) { // checkoutModalBodyPh1 is already effectively removed
-                //     // checkoutModalBodyPh1.innerHTML = `<p>Error: Received an unknown UI component name: ${uiElement}.</p>`;
-                // }
         }
     }
     
@@ -627,6 +605,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             checkoutReviewModal.classList.remove('popping-in');
             checkoutReviewModal.classList.add('popping-out');
+            
+            window.parent.postMessage({ type: 'checkout_cancelled', modalId: 'checkout-review-modal' }, '*');
+            currentShippingSelection = {};
+            cachedCartDataForModals = null;
+            console.log("[Checkout Review Modal] Closed. State reset. Notified agent.");
+
             setTimeout(() => {
                 checkoutReviewModal.style.display = 'none';
                 checkoutReviewModal.classList.remove('popping-out');
@@ -639,7 +623,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (checkoutModalModifyBtn) {
         checkoutModalModifyBtn.addEventListener('click', () => {
             console.log("[Checkout Modal] Modify Cart button clicked.");
-            closeCheckoutReviewModal();
+            // Note: Modify doesn't fully cancel checkout, just closes review to allow cart changes.
+            // If a full cancel is desired here, it would need the same logic as closeCheckoutReviewModal.
+            // For now, keeping it as just closing the review modal.
+            closeCheckoutReviewModal(); 
         });
     }
     if (checkoutModalProceedBtn) {
@@ -736,6 +723,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             checkoutShippingModal.classList.remove('popping-in');
             checkoutShippingModal.classList.add('popping-out');
+
+            window.parent.postMessage({ type: 'checkout_cancelled', modalId: 'checkout-shipping-modal' }, '*');
+            currentShippingSelection = {};
+            cachedCartDataForModals = null; // Shipping selection is part of checkout flow, so reset cart cache too
+            console.log("[Checkout Shipping Modal] Closed. State reset. Notified agent.");
+            
             setTimeout(() => {
                 checkoutShippingModal.style.display = 'none';
                 checkoutShippingModal.classList.remove('popping-out');
@@ -837,6 +830,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             checkoutPaymentModal.classList.remove('popping-in');
             checkoutPaymentModal.classList.add('popping-out');
+
+            window.parent.postMessage({ type: 'checkout_cancelled', modalId: 'checkout-payment-modal' }, '*');
+            currentShippingSelection = {};
+            cachedCartDataForModals = null;
+            console.log("[Checkout Payment Modal] Closed. State reset. Notified agent.");
+
             setTimeout(() => {
                 checkoutPaymentModal.style.display = 'none';
                 checkoutPaymentModal.classList.remove('popping-out');
@@ -946,10 +945,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // All checkout related functions, dummy data, and event listeners previously here are now removed.
-
-    // Remove or comment out the OLD checkout modal logic if it's truly not needed elsewhere
-    // For example, openCheckoutModal_OLD(), closeCheckoutModal_OLD(), etc.
-
     console.log("[Main Page] Script loaded.");
 });
