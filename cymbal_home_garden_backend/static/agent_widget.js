@@ -480,6 +480,14 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
                 }, 'http://localhost:5000');
                 currentAgentMessageElement = null; return;
             }
+            // Handle agent backend command to cancel checkout
+            if (parsedData.type === "command" && parsedData.command_name === "cancel_checkout_flow") {
+                console.log(`[AgentWidgetDebug] websocket.onmessage: Received 'cancel_checkout_flow' command from backend.`);
+                window.parent.postMessage({ type: 'agent_initiated_checkout_cancel' }, 'http://localhost:5000');
+                console.log("[AgentWidgetDebug] websocket.onmessage: Relayed 'agent_initiated_checkout_cancel' to main page.");
+                currentAgentMessageElement = null; // No UI element for this command itself
+                return;
+            }
 
             if (parsedData.type === "product_recommendations" && parsedData.payload) {
                console.log("[AgentWidgetDebug] websocket.onmessage: Received product_recommendations.");
@@ -1210,121 +1218,18 @@ let initialGreetingSent = false; // Tracks if the first user message/greeting ha
                 interaction: "navigated_back_to_cart_review",
                 details: { reason: reason }
             });
+        } else if (type === 'checkout_cancelled') {
+            console.log(`[AgentWidgetDebug] Received postMessage 'checkout_cancelled' from parent. Modal ID: ${event.data.modalId}`);
+            sendMessageToServer({
+                event_type: "user_interaction",
+                interaction: "checkout_process_cancelled",
+                details: {
+                    stage: event.data.modalId
+                }
+            });
+            console.log("[AgentWidgetDebug] Sent 'checkout_process_cancelled' event to agent backend.");
         }
     });
     console.log("[AgentWidgetDebug] Agent widget script fully loaded and initialized.");
-
-    // --- Checkout Modal Logic ---
-    console.log("[AgentWidgetDebug] Initializing checkout modal logic.");
-
-    const deliveryModal = document.getElementById('delivery-modal');
-    const paymentModal = document.getElementById('payment-modal');
-
-    const continueToPaymentBtn = document.getElementById('continue-to-payment-btn');
-    const backToDeliveryBtn = document.getElementById('back-to-delivery-btn');
-    const submitPaymentBtn = document.getElementById('submit-payment-btn'); // Added as per HTML
-
-    if (!deliveryModal || !paymentModal) {
-        console.error("[AgentWidgetDebug] Checkout modal elements (delivery-modal or payment-modal) not found.");
-    }
-    if (!continueToPaymentBtn || !backToDeliveryBtn || !submitPaymentBtn) {
-        console.error("[AgentWidgetDebug] Checkout navigation buttons not found.");
-    }
-
-    function showModal(modalElement) {
-        if (modalElement) {
-            console.log(`[AgentWidgetDebug] Showing modal: ${modalElement.id}`);
-            modalElement.classList.add('modal-active');
-            // Specific logs as per plan
-            if (modalElement.id === 'delivery-modal') {
-                console.log('Delivery modal opened');
-            } else if (modalElement.id === 'payment-modal') {
-                console.log('Payment modal opened');
-            }
-        } else {
-            console.error("[AgentWidgetDebug] showModal: modalElement is null or undefined.");
-        }
-    }
-
-    function hideModal(modalElement) {
-        if (modalElement) {
-            console.log(`[AgentWidgetDebug] Hiding modal: ${modalElement.id}`);
-            modalElement.classList.remove('modal-active');
-             if (modalElement.id === 'delivery-modal') {
-                console.log('Delivery modal closed');
-            } else if (modalElement.id === 'payment-modal') {
-                console.log('Payment modal closed');
-            }
-        } else {
-            console.error("[AgentWidgetDebug] hideModal: modalElement is null or undefined.");
-        }
-    }
-
-    // Event Listeners for Modal Close Buttons
-    const modalCloseBtns = agentWidget.querySelectorAll('.checkout-modal .modal-close-btn');
-    if (modalCloseBtns) {
-        modalCloseBtns.forEach(btn => {
-            btn.addEventListener('click', (event) => {
-                const modalToClose = event.target.closest('.checkout-modal');
-                if (modalToClose) {
-                    console.log(`[AgentWidgetDebug] Modal close button clicked for ${modalToClose.id}.`);
-                    if (modalToClose.id === 'payment-modal') {
-                        console.log('Payment modal close button clicked.');
-                    } else if (modalToClose.id === 'delivery-modal') {
-                        console.log('Delivery modal close button clicked.');
-                    }
-                    hideModal(modalToClose);
-                    console.log('[AgentWidgetDebug] Checkout flow cancelled via close button. UI reverted to pre-checkout state (modals hidden). Temporary data would be cleared here.');
-                } else {
-                    console.error("[AgentWidgetDebug] Could not find parent modal for close button.");
-                }
-            });
-        });
-    } else {
-        console.error("[AgentWidgetDebug] No modal close buttons found with class .modal-close-btn.");
-    }
-
-
-    // Event Listener for "Continue to Payment" Button
-    if (continueToPaymentBtn && deliveryModal && paymentModal) {
-        continueToPaymentBtn.addEventListener('click', () => {
-            console.log('[AgentWidgetDebug] Continue to payment clicked. Hiding delivery, showing payment.');
-            hideModal(deliveryModal);
-            showModal(paymentModal);
-        });
-    }
-
-    // Event Listener for "Back to Delivery" Button
-    if (backToDeliveryBtn && deliveryModal && paymentModal) {
-        backToDeliveryBtn.addEventListener('click', () => {
-            console.log('[AgentWidgetDebug] Back to delivery clicked. Hiding payment, showing delivery.');
-            hideModal(paymentModal);
-            showModal(deliveryModal);
-        });
-    }
-
-    // Event Listener for "Submit Payment" Button (Basic for now)
-    if (submitPaymentBtn && paymentModal) {
-        submitPaymentBtn.addEventListener('click', () => {
-            console.log('[AgentWidgetDebug] Submit payment button clicked.');
-            // Future: Implement payment submission logic
-            // For now, just hide the payment modal as a placeholder action
-            hideModal(paymentModal);
-            console.log('[AgentWidgetDebug] Payment submitted (placeholder). Payment modal closed.');
-            // Potentially show a success/thank you message or revert to a non-checkout state.
-        });
-    }
-    
-    // --- End Checkout Modal Logic ---
-
-    // Example of how to show the delivery modal initially (for testing, remove later)
-    // This would typically be triggered by an agent action or another UI event.
-    // setTimeout(() => {
-    //     if(deliveryModal) {
-    //         console.log("[AgentWidgetDebug] TEST: Triggering delivery modal display for testing.");
-    //         showModal(deliveryModal);
-    //     }
-    // }, 5000);
-
 
 });

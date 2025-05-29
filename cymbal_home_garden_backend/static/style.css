@@ -1897,11 +1897,11 @@ input[type="reset"] {
     margin: auto; /* Center in viewport */
     padding: 35px; /* Slightly Increased padding */
     border: 1px solid var(--current-card-border);
-    border-radius: var(--current-glass-border-radius);
+    border-radius: 12px; /* Standardized */
     width: auto; /* Allow it to use max-width */
     max-width: 1350px; /* Further Increased max-width for more rectangular shape */
     min-height: 700px; /* Further Increased min-height for more rectangular shape */
-    box-shadow: 0 5px 20px var(--current-modal-shadow);
+    box-shadow: 0 5px 15px var(--current-modal-shadow); /* Standardized */
     position: relative;
     animation: fadeInModal 0.3s ease-out;
     display: flex;
@@ -2037,8 +2037,8 @@ input[type="reset"] {
 
     background-color: var(--current-modal-bg, #2c3e50); /* Solid background - using a dark grey as suggested, with fallback */
     color: var(--current-text);
-    border-radius: 10px; /* Adjusted */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border-radius: 12px; /* Standardized */
+    box-shadow: 0 5px 15px var(--current-modal-shadow); /* Standardized */
     
     /* Remove any potential inherited transparency/blur from previous attempts */
     backdrop-filter: none !important;
@@ -2051,7 +2051,7 @@ input[type="reset"] {
 #checkout-review-modal .checkout-modal-content { /* Specificity */
     width: 100%;
     height: 100%; /* Fill the parent #checkout-review-modal */
-    padding: 25px 35px; /* Adjusted padding */
+    padding: 25px; /* Standardized padding */
     
     background-color: var(--current-modal-bg, #2c3e50); /* Same solid background as parent */
     color: var(--current-text); /* Ensure text color is consistent */
@@ -2126,9 +2126,9 @@ input[type="reset"] {
 }
 
 .checkout-modal-actions button {
-    font-size: 0.95rem; /* Adjusted */
-    padding: 12px 22px; /* Adjusted */
-    border-radius: 6px; /* Adjusted */
+    font-size: 0.95rem; /* Standardized */
+    padding: 12px 20px; /* Standardized */
+    border-radius: 8px; /* Standardized */
     cursor: pointer;
     border: none;
     font-weight: 500;
@@ -2299,9 +2299,9 @@ input[type="reset"] {
 
 /* Styles for checkout-shipping-modal */
 #checkout-shipping-modal {
-    max-width: 600px !important; /* Adjusted */
-    min-height: 470px !important; /* Adjusted */
-    max-height: 470px !important; /* Adjusted */
+    max-width: 600px !important; 
+    min-height: 470px !important; 
+    max-height: 90vh !important; /* Standardized */
     width: 90% !important;
     background-color: var(--current-modal-bg, #2c3e50) !important;
     backdrop-filter: none !important;
@@ -2312,7 +2312,8 @@ input[type="reset"] {
     transform: translate(-50%, -50%) !important;
     z-index: 1050 !important;
     flex-direction: column !important;
-    border-radius: 8px !important; /* Added */
+    border-radius: 12px !important; /* Standardized */
+    box-shadow: 0 5px 15px var(--current-modal-shadow) !important; /* Standardized */
 }
 
 #checkout-shipping-modal .checkout-modal-content {
@@ -2325,23 +2326,23 @@ input[type="reset"] {
 }
 
 #checkout-shipping-modal .checkout-modal-content h2 {
-    font-size: 1.75rem !important; /* Adjusted */
+    font-size: 1.8rem !important; /* Standardized */
     margin-top: 0 !important;
-    margin-bottom: 22px !important; /* Adjusted */
+    margin-bottom: 22px !important; 
 }
 
 #checkout-shipping-modal .checkout-modal-content .shipping-option label {
-    font-size: 1.05rem !important; /* Adjusted */
+    font-size: 1.05rem !important; 
 }
 
 #checkout-shipping-modal .checkout-modal-content #pickup-locations-list p {
-    font-size: 0.9rem !important; /* Adjusted */
+    font-size: 0.9rem !important; 
 }
 
 #checkout-shipping-modal .checkout-modal-content .checkout-modal-actions button {
-    font-size: 0.9rem !important; /* Adjusted */
-    padding: 9px 18px !important; /* Adjusted */
-    border-radius: 6px !important; /* Adjusted */
+    font-size: 0.95rem !important; /* Standardized */
+    padding: 12px 20px !important; /* Standardized */
+    border-radius: 8px !important; /* Standardized */
 }
 
 /* Payment Modal Styles */
@@ -2354,11 +2355,12 @@ input[type="reset"] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     opacity: 1 !important;
-    border-radius: 10px !important; /* Consistent rounded corners */
+    border-radius: 12px !important; /* Standardized */
+    box-shadow: 0 5px 15px var(--current-modal-shadow) !important; /* Standardized */
 }
 
 #checkout-payment-modal .checkout-modal-content {
-    padding: 30px; /* Generous padding */
+    padding: 25px; /* Standardized padding */
     display: flex;
     flex-direction: column;
     height: 100%; /* Ensure content area fills modal */
@@ -2467,9 +2469,9 @@ input[type="reset"] {
 }
 
 #checkout-payment-modal .checkout-modal-actions button {
-    font-size: 1rem; /* Readable button text */
-    padding: 12px 20px; /* Comfortable button size */
-    border-radius: var(--current-glass-border-radius);
+    font-size: 0.95rem; /* Standardized */
+    padding: 12px 20px; /* Standardized */
+    border-radius: 8px; /* Standardized */
     border: none;
     cursor: pointer;
     font-weight: 500;
