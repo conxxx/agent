@@ -44,7 +44,39 @@ def rate_limit_callback(
         context.
       llm_request: A LlmRequest obj representing the active LLM request.
     """
-    for content in llm_request.contents:
+    # DIAGNOSTIC LOG: Log content being sent to LLM
+    try:
+        llm_request_summary = "LLM Request Contents: "
+        for i, content_item in enumerate(llm_request.contents):
+            llm_request_summary += f"\n  Content Item {i} (role: {content_item.role}):"
+            for j, part_item in enumerate(content_item.parts):
+                part_summary = str(part_item) # Default str representation
+                if hasattr(part_item, 'text') and part_item.text:
+                    part_summary = f"TextPart(text='{part_item.text[:100]}...')" if len(part_item.text) > 100 else f"TextPart(text='{part_item.text}')"
+                elif hasattr(part_item, 'inline_data') and part_item.inline_data:
+                    part_summary = f"InlineDataPart(mime_type='{part_item.inline_data.mime_type}', data_len={len(part_item.inline_data.data)})"
+                    if 'audio' in part_item.inline_data.mime_type and hasattr(part_item.inline_data, 'data') and isinstance(part_item.inline_data.data, bytes) and len(part_item.inline_data.data) > 0:
+                        # Log first up to 16 bytes as hex to help identify audio format issues
+                        first_bytes_hex = part_item.inline_data.data[:16].hex()
+                        part_summary += f", first_16_bytes_hex='{first_bytes_hex}'"
+                elif hasattr(part_item, 'function_call') and part_item.function_call:
+                    part_summary = f"FunctionCallPart(name='{part_item.function_call.name}')"
+                elif hasattr(part_item, 'function_response') and part_item.function_response:
+                     part_summary = f"FunctionResponsePart(name='{part_item.function_response.name}')"
+                else: # Fallback for other part types or if text/data is empty
+                    part_summary = f"UnknownPartType(type='{type(part_item).__name__}')"
+
+
+                llm_request_summary += f"\n    Part {j}: {part_summary}"
+        
+        # Truncate if overall summary is too long
+        if len(llm_request_summary) > 1000: # Increased limit for better context
+            llm_request_summary = llm_request_summary[:1000] + "\n  ... (summary truncated)"
+        logger.info(f"[DIAG_LOG LLM_REQUEST] before_model_callback (rate_limit_callback): {llm_request_summary}")
+    except Exception as e:
+        logger.error(f"[DIAG_LOG LLM_REQUEST] before_model_callback: Error serializing LlmRequest for logging: {e}", exc_info=True)
+
+    for content in llm_request.contents: # Existing loop
         for part in content.parts:
             if part.text=="":
                 part.text=" "
@@ -153,7 +185,10 @@ def lowercase_value(value):
 def before_tool(
     tool: BaseTool, args: Dict[str, Any], tool_context: CallbackContext
 ) -> Optional[Dict[str, Any]]:
-    logger.debug(f"before_tool triggered for tool: {tool.name} with args: {args}")
+    # DIAGNOSTIC LOG: Log tool input arguments
+    args_summary = str(args)
+    if len(args_summary) > 300: args_summary = args_summary[:300] + "..."
+    logger.info(f"[DIAG_LOG TOOL_INPUT] before_tool: Tool: {tool.name}, Args: {args_summary}")
 
     # Ensure customer_profile is loaded in the state
     if "customer_profile" not in tool_context.state:
@@ -221,7 +256,10 @@ def before_tool(
 def after_tool(
     tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext, tool_response: Dict
 ) -> Optional[Dict]:
-    logger.debug(f"after_tool triggered for tool: {tool.name} with args: {args}, response: {tool_response}")
+    # DIAGNOSTIC LOG: Log tool output response
+    response_summary = str(tool_response)
+    if len(response_summary) > 300: response_summary = response_summary[:300] + "..."
+    logger.info(f"[DIAG_LOG TOOL_OUTPUT] after_tool: Tool: {tool.name}, Response: {response_summary}")
 
     # After approvals, we perform operations deterministically in the callback
     # to apply the discount in the cart.
@@ -265,6 +303,19 @@ def after_tool(
 # checking that the customer profile is loaded as state.
 def before_agent(callback_context: InvocationContext):
     logger.debug("before_agent: Callback triggered.")
+    # DIAGNOSTIC LOG: Log ADK Input (request to agent)
+    if callback_context.request and callback_context.request.content:
+        try:
+            # Attempt to serialize content for logging, be mindful of complex objects
+            request_content_summary = str(callback_context.request.content)
+            if len(request_content_summary) > 300: # Avoid excessively long logs
+                request_content_summary = request_content_summary[:300] + "..."
+            logger.info(f"[DIAG_LOG ADK_INPUT] before_agent: Request content to agent: {request_content_summary}")
+        except Exception as e:
+            logger.error(f"[DIAG_LOG ADK_INPUT] before_agent: Error serializing request content for logging: {e}")
+    else:
+        logger.info("[DIAG_LOG ADK_INPUT] before_agent: No request content found in callback_context.")
+
     if "customer_profile" not in callback_context.state:
         logger.info("before_agent: 'customer_profile' not found in state. Attempting to load.")
         try:

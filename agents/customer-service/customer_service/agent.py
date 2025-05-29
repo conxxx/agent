@@ -27,10 +27,10 @@ from .shared_libraries.callbacks import (
     after_tool,
 )
 from .tools.tools import (
-    send_call_companion_link,
-    approve_discount,
-    sync_ask_for_approval,
-    update_salesforce_crm,
+    # send_call_companion_link, # Commented out in tools.py
+    # approve_discount, # Commented out in tools.py
+    # sync_ask_for_approval, # Commented out in tools.py
+    # update_salesforce_crm, # Commented out in tools.py
     access_cart_information,
     modify_cart,
     get_product_recommendations,
@@ -41,12 +41,16 @@ from .tools.tools import (
     generate_qr_code,
     search_products, # Added import for the new tool
     set_website_theme, # Added import for the new theme tool
-    # initiate_checkout_ui, # Deprecated
-    display_checkout_item_selection_ui,
-    display_shipping_options_ui,
-    display_pickup_locations_ui,
-    display_payment_methods_ui,
-    display_order_confirmation_ui,
+    initiate_checkout_ui, # Added for checkout UI
+    initiate_shipping_ui, # Added for shipping UI
+    initiate_payment_ui, # Added for payment UI
+    agent_processes_shipping_choice, # Added for processing shipping choices
+    submit_order_and_clear_cart, # Added for final order submission
+    # display_checkout_item_selection_ui, # REMOVED
+    # display_shipping_options_ui, # REMOVED
+    # display_pickup_locations_ui, # REMOVED
+    # display_payment_methods_ui, # REMOVED
+    # display_order_confirmation_ui, # REMOVED
 )
 
 warnings.filterwarnings("ignore", category=UserWarning, module=".*pydantic.*")
@@ -132,10 +136,10 @@ root_agent = Agent(
     instruction=INSTRUCTION,
     name=configs.agent_settings.name,
     tools=[
-        send_call_companion_link,
-        approve_discount,
-        sync_ask_for_approval,
-        update_salesforce_crm,
+        # send_call_companion_link, # Commented out in tools.py and from imports
+        # approve_discount, # Commented out in tools.py and from imports
+        # sync_ask_for_approval, # Commented out in tools.py and from imports
+        # update_salesforce_crm, # Commented out in tools.py and from imports
         access_cart_information,
         modify_cart,
         get_product_recommendations,
@@ -147,12 +151,16 @@ root_agent = Agent(
         search_products,
         format_product_recommendations_for_display, # Added new tool
         set_website_theme, # Added new theme tool
-        # initiate_checkout_ui, # Deprecated
-        display_checkout_item_selection_ui,
-        display_shipping_options_ui,
-        display_pickup_locations_ui,
-        display_payment_methods_ui,
-        display_order_confirmation_ui,
+        initiate_checkout_ui, # Added for checkout UI
+        initiate_shipping_ui, # Added for shipping UI
+        initiate_payment_ui, # Added for payment UI
+        agent_processes_shipping_choice, # Added for processing shipping choices
+        submit_order_and_clear_cart, # Added for final order submission
+        # display_checkout_item_selection_ui, # REMOVED
+        # display_shipping_options_ui, # REMOVED
+        # display_pickup_locations_ui, # REMOVED
+        # display_payment_methods_ui, # REMOVED
+        # display_order_confirmation_ui, # REMOVED
     ],
     before_tool_callback=before_tool,
     after_tool_callback=after_tool,

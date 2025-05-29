@@ -58,6 +58,44 @@
             </div>
         </div>
         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
+
+        <!-- Checkout Modals -->
+        <!-- Delivery Modal -->
+        <div id="delivery-modal" class="checkout-modal">
+            <div class="checkout-modal-content">
+                <button class="modal-close-btn" aria-label="Close">&times;</button>
+                <div class="checkout-modal-header">
+                    <h2>Delivery Details</h2>
+                </div>
+                <div class="checkout-modal-body">
+                    <!-- Delivery form fields will go here -->
+                    <p>Delivery form content...</p>
+                </div>
+                <div class="checkout-modal-footer">
+                    <button id="continue-to-payment-btn" class="btn btn-primary">Continue to Payment</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Modal -->
+        <div id="payment-modal" class="checkout-modal">
+            <div class="checkout-modal-content">
+                <button class="modal-close-btn" aria-label="Close">&times;</button>
+                <div class="checkout-modal-header">
+                    <h2>Payment Information</h2>
+                </div>
+                <div class="checkout-modal-body">
+                    <!-- Payment form fields will go here -->
+                    <p>Payment form content...</p>
+                </div>
+                <div class="checkout-modal-footer">
+                    <button id="back-to-delivery-btn" class="btn btn-secondary">Back</button>
+                    <button id="submit-payment-btn" class="btn btn-primary">Submit Payment</button>
+                </div>
+            </div>
+        </div>
+        <!-- End Checkout Modals -->
+
     </div>
     <script type="module" src="{{ url_for('static', filename='agent_widget.js') }}"></script>
 </body>

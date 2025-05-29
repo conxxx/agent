@@ -140,7 +140,7 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
     try:
         async for agent_event in events_iter:
             event_type_str = f"type: {type(agent_event).__name__}"
-            logger.info(f"[DIAG_LOG S2C {session_id}] Received agent_event ({event_type_str})")
+            # logger.info(f"[DIAG_LOG S2C {session_id}] Received agent_event ({event_type_str})")
 
             is_turn_complete = getattr(agent_event, 'turn_complete', False)
             is_interrupted = getattr(agent_event, 'interrupted', False)
@@ -160,7 +160,7 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
             if not server_content:
                 logger.info(f"[DIAG_LOG S2C {session_id}] Event has no server_content. Skipping.")
                 continue
-
+            
             # --- Start: Preserve existing non-voice command handling ---
             # Check for theme change instruction (Example of preserving custom logic)
             theme_action_details = None
@@ -215,22 +215,6 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                 await ws.send_text(json.dumps(product_recommendation_dict)) # Client expects raw JSON string for this
                 continue
 
-            # Check for trigger_checkout_modal action
-            checkout_modal_action = None
-            if hasattr(server_content, 'parts') and server_content.parts and \
-               hasattr(server_content.parts[0], 'function_response') and \
-               hasattr(server_content.parts[0].function_response, 'response') and \
-               isinstance(server_content.parts[0].function_response.response, dict) and \
-               server_content.parts[0].function_response.response.get("action") == "trigger_checkout_modal":
-                checkout_modal_action = server_content.parts[0].function_response.response
-            elif isinstance(server_content, dict) and server_content.get("action") == "trigger_checkout_modal":
-                checkout_modal_action = server_content
-            
-            if checkout_modal_action:
-                logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'trigger_checkout_modal'")
-                await ws.send_json({"type": "command", "command_name": "trigger_checkout_modal", "payload": checkout_modal_action})
-                continue
-
             # Check for generic ui_command
             # This expects the LLM to output a valid JSON string in part.text
             # if the content is a ui_command.
@@ -243,13 +227,110 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                isinstance(server_content.parts[0].function_response.response, dict):
                 
                 tool_response_dict = server_content.parts[0].function_response.response
+
+                # Handle 'show_checkout_ui' action
+                if tool_response_dict.get("action") == "show_checkout_ui":
+                    cart_data = tool_response_dict.get("cart_data")
+                    if cart_data is not None:
+                        logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'show_checkout_ui'. Cart data present.")
+                        # Ensure agent's speech for this turn is sent before this command.
+                        # The current loop structure processes events one by one.
+                        # If speech parts came before this tool_response part in the stream for the same agent turn, they'd be sent.
+                        # This command is sent when the tool_result event is processed.
+                        await ws.send_json({
+                            "type": "command",
+                            "command_name": "display_checkout_modal",
+                            "data": cart_data
+                        })
+                        logger.info(f"[DIAG_LOG S2C {session_id}] Sent 'display_checkout_modal' command with cart data.")
+                        continue # Command handled, move to next agent_event
+                    else:
+                        logger.warning(f"[DIAG_LOG S2C {session_id}] 'show_checkout_ui' action received, but 'cart_data' is missing or None. Payload: {tool_response_dict}")
+                        # Optionally, send an error or a specific message to the client if cart_data is crucial and missing.
+                        # For now, just log and continue. The client might need to handle missing cart_data gracefully.
+                        continue
+                
+                # Handle new shipping UI actions
+                if tool_response_dict.get("action") == "show_shipping_ui_requested":
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'show_shipping_ui_requested'.")
+                    await ws.send_json({
+                        "type": "command",
+                        "command_name": "display_shipping_modal"
+                    })
+                    continue
+
+                # Handle new payment UI action
+                if tool_response_dict.get("action") == "show_payment_ui_requested":
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'show_payment_ui_requested'.")
+                    await ws.send_json({
+                        "type": "command",
+                        "command_name": "display_payment_modal" # Client will listen for this
+                    })
+                    continue
+                
+                action_to_selection_type_map = {
+                    "confirm_ui_home_delivery": "home_delivery",
+                    "confirm_ui_pickup_initiated": "pickup_initiated",
+                    "confirm_ui_pickup_address": "pickup_address"
+                }
+                tool_action = tool_response_dict.get("action")
+                if tool_action in action_to_selection_type_map:
+                    selection_type = action_to_selection_type_map[tool_action]
+                    command_payload = {
+                        "type": "command",
+                        "command_name": "agent_confirm_selection",
+                        "selection_type": selection_type
+                    }
+                    if selection_type == "pickup_address":
+                        command_payload["address_index"] = tool_response_dict.get("address_index")
+                    
+                    # Send speech first if present in tool response
+                    agent_speech = tool_response_dict.get("speak")
+                    if agent_speech:
+                        logger.info(f"[DIAG_LOG S2C {session_id}] Sending agent speech for '{tool_action}': '{agent_speech[:70]}...'")
+                        await ws.send_json({"mime_type": "text/plain", "data": agent_speech})
+
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling '{tool_action}'. Sending command: {command_payload}")
+                    await ws.send_json(command_payload)
+                    continue
+
+                if tool_response_dict.get("action") == "no_ui_change_needed":
+                    agent_speech = tool_response_dict.get("speak")
+                    if agent_speech:
+                        logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'no_ui_change_needed'. Sending agent speech: '{agent_speech[:70]}...'")
+                        await ws.send_json({"mime_type": "text/plain", "data": agent_speech})
+                    else:
+                        logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'no_ui_change_needed' but no speech provided.")
+                    continue
+                
+                # Handle 'refresh_cart_and_show_confirmation' action from submit_order_and_clear_cart tool
+                if tool_response_dict.get("action") == "refresh_cart_and_show_confirmation":
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'refresh_cart_and_show_confirmation'.")
+                    # Send agent speech first if available (e.g., "Order submitted successfully!")
+                    agent_speech_for_confirmation = tool_response_dict.get("message") # Tool returns message from API
+                    order_id_for_confirmation = tool_response_dict.get("order_id")
+                    if agent_speech_for_confirmation:
+                        logger.info(f"[DIAG_LOG S2C {session_id}] Sending agent speech for order confirmation: '{agent_speech_for_confirmation[:70]}...'")
+                        await ws.send_json({"mime_type": "text/plain", "data": agent_speech_for_confirmation})
+                    
+                    # Send command to UI
+                    await ws.send_json({
+                        "type": "command",
+                        "command_name": "order_confirmed_refresh_cart", # Client will listen for this
+                        "data": {"order_id": order_id_for_confirmation, "message": agent_speech_for_confirmation }
+                    })
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Sent 'order_confirmed_refresh_cart' command.")
+                    continue
+
+
                 if tool_response_dict.get("action") == "display_ui" and "ui_element" in tool_response_dict and "payload" in tool_response_dict:
                     direct_ui_command_payload = {
                         "type": "ui_command", # Standardize the type for client
                         "command_name": tool_response_dict.get("ui_element"),
                         "payload": tool_response_dict.get("payload")
                     }
-                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling direct 'display_ui' tool response: {direct_ui_command_payload.get('command_name')}")
+                    log_command_name = direct_ui_command_payload.get('command_name')
+                    logger.info(f"[DIAG_LOG S2C {session_id}] Handling direct 'display_ui' tool response: {log_command_name}")
                     await ws.send_json(direct_ui_command_payload)
                     continue # Command handled
 
@@ -281,11 +362,7 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
             if ui_command_details_from_text:
                 command_name = ui_command_details_from_text.get("command_name", "Unknown UI Command")
                 logger.info(f"[DIAG_LOG S2C {session_id}] Handling 'ui_command' from text: {command_name}")
-                if command_name == "display_shipping_options_ui":
-                    logger.info(f"[DIAG_LOG S2C {session_id}] Intercepted '{command_name}', sending 'initiate_checkout'.")
-                    await ws.send_json({"type": "initiate_checkout"})
-                else:
-                    await ws.send_json(ui_command_details_from_text)
+                await ws.send_json(ui_command_details_from_text)
                 continue
             
             message_to_send = None
@@ -297,11 +374,16 @@ async def agent_to_client_messaging(ws: WebSocket, events_iter: any, session_id:
                 if audio_data:
                     base64_encoded_audio = base64.b64encode(audio_data).decode("ascii")
                     message_to_send = {"mime_type": "audio/pcm", "data": base64_encoded_audio}
-                    logger.info(f"[DIAG_LOG S2C {session_id}] Sending audio/pcm: {len(audio_data)} bytes raw.")
+                    # logger.info(f"[DIAG_LOG S2C {session_id}] Sending audio/pcm: {len(audio_data)} bytes raw.")
                 else:
                     logger.info(f"[DIAG_LOG S2C {session_id}] Audio part present but data is empty.")
             
             if message_to_send:
+                # DIAGNOSTIC LOG: Log chunks sent from streaming_server.py to WebSocket client (proxy)
+                log_data_summary = str(message_to_send)
+                if len(log_data_summary) > 150: # Avoid overly long logs for audio data
+                    log_data_summary = log_data_summary[:150] + "..."
+                # logger.info(f"[DIAG_LOG S2C {session_id}] SENDING CHUNK TO WS CLIENT (PROXY): {log_data_summary}")
                 await ws.send_json(message_to_send)
             else:
                 logger.info(f"[DIAG_LOG S2C {session_id}] No text or audio/pcm data in part to send.")
@@ -320,11 +402,10 @@ async def client_to_agent_messaging(ws: WebSocket, queue_to_agent: LiveRequestQu
     logger.info(f"[DIAG_LOG C2S] Start client_to_agent_messaging for session: {session_id}, queue_id: {id(queue_to_agent)}")
     try:
         while True:
-            logger.info(f"[DIAG_LOG C2S {session_id}] Waiting for client message...")
             raw_client_message = await ws.receive_text()
             # Avoid logging full raw_client_message if it's very long (e.g., audio data)
             log_msg_summary = raw_client_message[:200] + ('...' if len(raw_client_message) > 200 else '')
-            logger.info(f"[DIAG_LOG C2S {session_id}] Received raw message (len: {len(raw_client_message)}): '{log_msg_summary}'")
+            logger.debug(f"[DIAG_LOG C2S {session_id}] Received raw message (len: {len(raw_client_message)}): '{log_msg_summary}'") # Changed to debug
             
             try:
                 client_message_json = json.loads(raw_client_message)
@@ -373,7 +454,7 @@ async def client_to_agent_messaging(ws: WebSocket, queue_to_agent: LiveRequestQu
             elif "mime_type" in client_message_json:
                 mime_type = client_message_json.get("mime_type")
                 data = client_message_json.get("data")
-                logger.info(f"[DIAG_LOG C2S {session_id}] Fallback: mime_type='{mime_type}', data_len={len(data) if data else 'None'}")
+                logger.debug(f"[DIAG_LOG C2S {session_id}] Fallback: mime_type='{mime_type}', data_len={len(data) if data else 'None'}") # Changed to debug
 
                 if not mime_type or data is None:
                     logger.warning(f"[DIAG_LOG C2S {session_id}] Fallback: Missing mime_type or data.")
@@ -390,7 +471,12 @@ async def client_to_agent_messaging(ws: WebSocket, queue_to_agent: LiveRequestQu
                 elif mime_type == "audio/pcm":
                     try:
                         decoded_audio_bytes = base64.b64decode(str(data))
-                        logger.info(f"[DIAG_LOG C2S {session_id}] Sending audio (fallback) to agent: {len(decoded_audio_bytes)} bytes.")
+                        # Threshold to filter out very short audio packets (e.g., mic pops)
+                        MIN_AUDIO_BYTES_THRESHOLD = 640  # Approx 20ms of 16kHz 16-bit mono audio
+                        if len(decoded_audio_bytes) < MIN_AUDIO_BYTES_THRESHOLD:
+                            logger.info(f"[DIAG_LOG C2S {session_id}] Audio packet too short ({len(decoded_audio_bytes)} bytes), below threshold ({MIN_AUDIO_BYTES_THRESHOLD} bytes). Skipping send_realtime.")
+                            continue
+                        logger.debug(f"[DIAG_LOG C2S {session_id}] Sending audio (fallback) to agent: {len(decoded_audio_bytes)} bytes.") # Changed to debug
                         queue_to_agent.send_realtime(Blob(data=decoded_audio_bytes, mime_type="audio/pcm"))
                     except Exception as e:
                         logger.error(f"[DIAG_LOG C2S {session_id}] Error decoding/sending audio (fallback): {e}", exc_info=True)
@@ -407,6 +493,26 @@ async def client_to_agent_messaging(ws: WebSocket, queue_to_agent: LiveRequestQu
                         continue
                 else:
                     logger.warning(f"[DIAG_LOG C2S {session_id}] Fallback: Unhandled mime_type '{mime_type}'.")
+            
+            elif client_message_json.get("event_type") == "user_shipping_interaction":
+                interaction_data = client_message_json # The whole JSON is the interaction data
+                logger.info(f"[DIAG_LOG C2S {session_id}] Processing 'user_shipping_interaction': {interaction_data}")
+                # Re-package this as a text message or a structured event for the agent
+                # For simplicity, sending as a structured text message that prompts can parse
+                # Or, if agent is set up for custom events, use that.
+                # Example: "User selected shipping: home_delivery"
+                # Example: "User selected pickup address: Cymbal Store Downtown - 123 Main St, Anytown, USA (index 0)"
+                interaction_type = interaction_data.get("interaction")
+                details = interaction_data.get("details", {})
+                
+                user_text_for_agent = f"UI_SHIPPING_EVENT: type='{interaction_type}'"
+                if details:
+                    user_text_for_agent += f", details={json.dumps(details)}"
+
+                logger.info(f"[DIAG_LOG C2S {session_id}] Sending shipping interaction to agent as text: '{user_text_for_agent}'")
+                content = Content(role="user", parts=[Part.from_text(text=user_text_for_agent)])
+                queue_to_agent.send_content(content=content)
+            
             else:
                 logger.warning(f"[DIAG_LOG C2S {session_id}] Unknown message structure: {client_message_json}")
 

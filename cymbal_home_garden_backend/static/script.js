@@ -19,44 +19,68 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartSidebarSubtotalEl = document.getElementById('cart-sidebar-subtotal');
     const cartSidebarItemCountEl = document.getElementById('cart-sidebar-item-count');
     const clearCartSidebarBtn = document.getElementById('cart-sidebar-clear-btn');
-    const cartSidebarCheckoutBtn = document.getElementById('cart-sidebar-checkout-btn');
+    // const cartSidebarCheckoutBtn = document.getElementById('cart-sidebar-checkout-btn'); // REMOVED
     
-    console.log("[Cart Init] Sidebar cart elements:", { leftSidebarCart, cartSidebarToggleBtn, cartSidebarItemsContainer, cartSidebarSubtotalEl, cartSidebarItemCountEl, clearCartSidebarBtn, cartSidebarCheckoutBtn });
+    console.log("[Cart Init] Sidebar cart elements:", { leftSidebarCart, cartSidebarToggleBtn, cartSidebarItemsContainer, cartSidebarSubtotalEl, cartSidebarItemCountEl, clearCartSidebarBtn }); // REMOVED cartSidebarCheckoutBtn from log
 
-    // Checkout Modal (Sidebar) DOM Elements
-    const checkoutModalPh1 = document.getElementById('checkout-modal-ph1');
-    const checkoutModalTitlePh1 = document.getElementById('checkout-modal-title-ph1');
-    const checkoutModalBodyPh1 = document.getElementById('checkout-modal-body-ph1');
-    const closeCheckoutModalBtnPh1 = document.getElementById('checkout-modal-close-ph1'); 
-    const cancelCheckoutBtnPh1 = document.getElementById('checkout-cancel-btn-ph1'); 
-    const backCheckoutBtnPh1 = document.getElementById('checkout-back-btn-ph1');     
-    const nextCheckoutBtnPh1 = document.getElementById('checkout-next-btn-ph1');     
+    // New Checkout Review Modal DOM Elements
+    const checkoutReviewModal = document.getElementById('checkout-review-modal');
+    const closeCheckoutReviewModalBtn = checkoutReviewModal ? checkoutReviewModal.querySelector('.checkout-modal-close-btn') : null;
+    const checkoutModalItemsContainer = document.getElementById('checkout-modal-items-container');
+    const checkoutModalSubtotalEl = document.getElementById('checkout-modal-subtotal');
+    const checkoutModalModifyBtn = document.getElementById('checkout-modal-modify-btn');
+    const checkoutModalProceedBtn = document.getElementById('checkout-modal-proceed-btn');
+
+    // Shipping Modal DOM Elements
+    const checkoutShippingModal = document.getElementById('checkout-shipping-modal');
+    const closeCheckoutShippingModalBtn = checkoutShippingModal ? checkoutShippingModal.querySelector('.checkout-modal-close-btn') : null;
+    const shippingHomeDeliveryOpt = document.getElementById('shipping-home-delivery');
+    const shippingPickupPointOpt = document.getElementById('shipping-pickup-point');
+    const shippingRadioHome = document.getElementById('shipping-radio-home');
+    const shippingRadioPickup = document.getElementById('shipping-radio-pickup');
+    const pickupLocationsListContainer = document.getElementById('pickup-locations-list');
+    const shippingBackBtn = document.getElementById('shipping-back-btn');
+    const shippingContinueBtn = document.getElementById('shipping-continue-btn');
+
+    // Payment Modal DOM Elements
+    const checkoutPaymentModal = document.getElementById('checkout-payment-modal');
+    const closeCheckoutPaymentModalBtn = checkoutPaymentModal ? checkoutPaymentModal.querySelector('.checkout-modal-close-btn') : null;
+    const paymentRadioSaved = document.getElementById('payment-radio-saved');
+    const paymentRadioNew = document.getElementById('payment-radio-new');
+    const savedCardDetailsDiv = document.getElementById('saved-card-details');
+    const newCardFormDiv = document.getElementById('new-card-form');
+    const saveCardBtn = document.getElementById('save-card-btn');
+    const paymentBackBtn = document.getElementById('payment-back-btn');
+    const paymentConfirmBtn = document.getElementById('payment-confirm-btn');
+
+
+    // Checkout Modal (Sidebar) DOM Elements - REMOVED
+    // const checkoutModalPh1 = document.getElementById('checkout-modal-ph1');
+    // const checkoutModalTitlePh1 = document.getElementById('checkout-modal-title-ph1');
+    // const checkoutModalBodyPh1 = document.getElementById('checkout-modal-body-ph1');
+    // const closeCheckoutModalBtnPh1 = document.getElementById('checkout-modal-close-ph1');
+    // const cancelCheckoutBtnPh1 = document.getElementById('checkout-cancel-btn-ph1');
+    // const backCheckoutBtnPh1 = document.getElementById('checkout-back-btn-ph1');
+    // const nextCheckoutBtnPh1 = document.getElementById('checkout-next-btn-ph1');
 
     const DEFAULT_CUSTOMER_ID = "123";
     if(currentCustomerIdSpan) currentCustomerIdSpan.textContent = DEFAULT_CUSTOMER_ID;
 
     let localProductCache = {};
-    let currentCartItemsData = []; 
-    let currentCartItemIds = []; 
+    let currentCartItemsData = [];
+    let currentCartItemIds = [];
+    let cachedCartDataForModals = null; // To store cart data for reopening review modal
 
-    let checkoutProcessState = {
-        currentStep: null, 
-        selectedItems: [], 
-        shippingInfo: {
-            method: null, 
-            address: { name: '', street: '', city: '', postalCode: '', country: '' },
-            pickupLocation: null,
-            previousPickupLocations: [] 
-        },
-        paymentInfo: {
-            method: null, 
-            savedCardId: null, 
-            newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' },
-            previousPaymentMethods: []
-        },
-        orderTotal: 0
-    };
-    console.log("[Checkout] Initial checkoutProcessState:", JSON.parse(JSON.stringify(checkoutProcessState)));
+    const staticPickupLocations = [
+        { name: 'Cymbal Store Downtown', address: '123 Main St, Anytown, USA' },
+        { name: 'Cymbal Garden Center North', address: '789 Oak Ave, Anytown, USA' },
+        { name: 'Partner Locker Hub', address: '456 Pine Rd, Anytown, USA' }
+    ];
+    let currentShippingSelection = {};
+
+
+    // let checkoutProcessState = { ... }; // REMOVED
+    // console.log("[Checkout] Initial checkoutProcessState:", JSON.parse(JSON.stringify(checkoutProcessState))); // REMOVED
 
     // --- Left Sidebar Cart Logic ---
     function toggleCartSidebar() {
@@ -163,9 +187,12 @@ document.addEventListener('DOMContentLoaded', () => {
             calculateSubtotal(currentCartItemsData); // Will now update sidebar subtotal
             updateCartCount(currentCartItemsData); // Will now update sidebar count
             displayRecommendedProducts();
+            const subtotal = currentCartItemsData.reduce((sum, item) => sum + ((item.price_per_unit || 0) * item.quantity), 0);
+            return { items: currentCartItemsData, subtotal: subtotal }; // Return the necessary data
         } catch (error) {
             console.error("[Cart] Error fetching cart:", error);
             if(cartSidebarItemsContainer) cartSidebarItemsContainer.innerHTML = '<p>Error loading cart. Please try again.</p>';
+            throw error; // Re-throw error so it can be caught by caller
         }
     }
 
@@ -419,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Message Listener for Agent Widget ---
     window.addEventListener('message', (event) => {
         console.log("[Main Page] Message event received. Origin:", event.origin, "Data:", event.data);
-        const expectedWidgetOrigin = 'http://localhost:5000'; 
+        const expectedWidgetOrigin = 'http://localhost:5000';
         if (event.origin !== expectedWidgetOrigin) {
             console.warn(`[Main Page] Message received from unexpected origin: ${event.origin}. Expected: ${expectedWidgetOrigin}. Ignoring message.`);
             return;
@@ -433,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newTheme = event.data.payload;
             console.log(`[Main Page] Received SET_WEBSITE_THEME from widget with theme: ${newTheme}`);
             applyTheme(newTheme);
-        } else if (event.data.type === "REFRESH_CART_DISPLAY") { 
+        } else if (event.data.type === "REFRESH_CART_DISPLAY") {
             console.log("[Main Page] Received REFRESH_CART_DISPLAY from widget. Data:", event.data);
             fetchCart(); // This will update the sidebar cart display
 
@@ -462,621 +489,464 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (event.data.type === "ui_command" && event.data.command_name) { // Changed to match agent_widget.js
             console.log(`[Main Page] Received 'ui_command' for command: ${event.data.command_name}`, "Payload:", event.data.payload);
             handleDisplayUiComponent(event.data.command_name, event.data.payload); // Pass command_name as uiElement
+        } else if (event.data.type === 'show_checkout_modal_command' && event.data.cart) {
+            console.log("[Main Page] Received 'show_checkout_modal_command' from widget. Cart data:", event.data.cart);
+            openCheckoutReviewModal(event.data.cart);
+        } else if (event.data.type === 'show_shipping_modal_command') {
+            console.log("[Main Page] Received 'show_shipping_modal_command' from widget.");
+            openCheckoutShippingModal();
+        } else if (event.data.type === 'show_payment_modal_command') {
+            console.log("[Main Page] Received 'show_payment_modal_command' from widget.");
+            openCheckoutPaymentModal();
+        } else if (event.data.type === 'ui_select_shipping_home_delivery') {
+            console.log("[Main Page] Received 'ui_select_shipping_home_delivery' from widget.");
+            if(shippingRadioHome) shippingRadioHome.checked = true;
+            updateShippingSelectionUI({ type: 'home_delivery' });
+            hidePickupLocationsList();
+        } else if (event.data.type === 'ui_show_pickup_locations') {
+            console.log("[Main Page] Received 'ui_show_pickup_locations' from widget.");
+            if(shippingRadioPickup) shippingRadioPickup.checked = true;
+            updateShippingSelectionUI({ type: 'pickup_initiated' });
+            displayPickupLocationsList();
+        } else if (event.data.type === 'ui_select_pickup_address' && event.data.address_index !== undefined) {
+            console.log(`[Main Page] Received 'ui_select_pickup_address' for index ${event.data.address_index} from widget.`);
+            const selectedLocation = staticPickupLocations[event.data.address_index];
+            if (selectedLocation) {
+                updateShippingSelectionUI({ type: 'pickup_address', index: event.data.address_index, name: selectedLocation.name, address: selectedLocation.address });
+                // Also visually check the radio button for the specific pickup location if they exist
+                const pickupRadio = document.getElementById(`pickup-location-radio-${event.data.address_index}`);
+                if (pickupRadio) pickupRadio.checked = true;
+            }
+        } else if (event.data.type === 'order_confirmed_refresh_cart_command') {
+            console.log("[Main Page] Received 'order_confirmed_refresh_cart_command' from widget. Data:", event.data.data);
+            // Close any open checkout modals
+            if (checkoutPaymentModal && checkoutPaymentModal.style.display !== 'none') {
+                closeCheckoutPaymentModal();
+            }
+            if (checkoutShippingModal && checkoutShippingModal.style.display !== 'none') {
+                closeCheckoutShippingModal();
+            }
+            if (checkoutReviewModal && checkoutReviewModal.style.display !== 'none') {
+                closeCheckoutReviewModal();
+            }
+            // Refresh cart (will be empty as backend clears it)
+            fetchCart();
+            // Show confirmation message
+            const confirmationMessage = event.data.data?.message || "Your order has been submitted successfully!";
+            const orderIdMessage = event.data.data?.order_id ? ` Order ID: ${event.data.data.order_id}` : "";
+            alert(confirmationMessage + orderIdMessage); 
+            // TODO: Replace alert with a more integrated UI notification
         } else {
             console.log("[Main Page] Received message not handled by current logic:", event.data);
         }
     });
 
     function handleDisplayUiComponent(uiElement, payload) { // uiElement here is actually command_name
-        console.log(`[Checkout] handleDisplayUiComponent called with command_name (as uiElement): ${uiElement}, payload:`, payload);
-        showCheckoutModalPh1(); 
+        console.log(`[Main Page] handleDisplayUiComponent called with command_name (as uiElement): ${uiElement}, payload:`, payload);
+        // showCheckoutModalPh1(); // REMOVED - Checkout modal functionality is being removed
 
         switch (uiElement) { // uiElement here is actually command_name
-            case "checkout_item_selection":
-                renderCheckoutStep1ItemSelection(payload && payload.items ? payload.items : currentCartItemsData);
-                break;
-            case "shipping_options":
-                renderShippingStep();
-                break;
-            case "pickup_locations":
-                checkoutProcessState.shippingInfo.previousPickupLocations = payload && payload.locations ? payload.locations : [];
-                renderPickupLocationsStep(checkoutProcessState.shippingInfo.previousPickupLocations);
-                break;
-            case "payment_methods":
-                checkoutProcessState.paymentInfo.previousPaymentMethods = payload && payload.methods ? payload.methods : [];
-                renderPaymentStep(checkoutProcessState.paymentInfo.previousPaymentMethods);
-                break;
-            case "order_confirmation":
-                const orderId = payload && payload.details && payload.details.orderId ? payload.details.orderId : (payload && payload.details ? JSON.stringify(payload.details) : "N/A");
-                renderOrderConfirmationStep(orderId);
-                break;
+            // case "checkout_item_selection": // REMOVED
+            //     // renderCheckoutStep1ItemSelection(payload && payload.items ? payload.items : currentCartItemsData); // Function to be removed
+            //     break;
+            // case "shipping_options": // REMOVED
+            //     // renderShippingStep(); // Function to be removed
+            //     break;
+            // case "pickup_locations": // REMOVED
+            //     // checkoutProcessState.shippingInfo.previousPickupLocations = payload && payload.locations ? payload.locations : []; // State removed
+            //     // renderPickupLocationsStep(checkoutProcessState.shippingInfo.previousPickupLocations); // Function to be removed
+            //     console.log("[Main Page] Received 'pickup_locations' UI command - functionality removed.");
+            //     break;
+            // case "payment_methods": // REMOVED
+            //     // checkoutProcessState.paymentInfo.previousPaymentMethods = payload && payload.methods ? payload.methods : []; // State removed
+            //     // renderPaymentStep(checkoutProcessState.paymentInfo.previousPaymentMethods); // Function to be removed
+            //     console.log("[Main Page] Received 'payment_methods' UI command - functionality removed.");
+            //     break;
+            // case "order_confirmation": // REMOVED
+            //     // const orderId = payload && payload.details && payload.details.orderId ? payload.details.orderId : (payload && payload.details ? JSON.stringify(payload.details) : "N/A");
+            //     // renderOrderConfirmationStep(orderId); // Function to be removed
+            //     console.log("[Main Page] Received 'order_confirmation' UI command - functionality removed.");
+            //     break;
             default:
-                console.error(`[Checkout] Unknown uiElement received: ${uiElement}`);
-                if (checkoutModalBodyPh1) {
-                    checkoutModalBodyPh1.innerHTML = `<p>Error: Received an unknown UI component name: ${uiElement}.</p>`;
-                }
+                console.error(`[Main Page] Unknown/unhandled uiElement received in handleDisplayUiComponent: ${uiElement}`);
+                // if (checkoutModalBodyPh1) { // checkoutModalBodyPh1 is already effectively removed
+                //     // checkoutModalBodyPh1.innerHTML = `<p>Error: Received an unknown UI component name: ${uiElement}.</p>`;
+                // }
         }
     }
     
-    // --- Checkout Sidebar Logic (triggered from new sidebar checkout button) ---
-    if(cartSidebarCheckoutBtn) {
-        console.log("[Cart Init] Adding click listener to sidebar checkout button.");
-        cartSidebarCheckoutBtn.addEventListener('click', () => {
-            console.log("[Cart Sidebar] Checkout button clicked, initiating checkout flow.");
-            // Reset checkout state (same as before, just ensuring it's logged for the new button)
-            checkoutProcessState = {
-                currentStep: 'items', selectedItems: [],
-                shippingInfo: { method: null, address: { name: '', street: '', city: '', postalCode: '', country: '' }, pickupLocation: null, previousPickupLocations: [] },
-                paymentInfo: { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] },
-                orderTotal: 0
-            };
-            console.log("[Checkout] State initialized for new checkout flow from sidebar:", JSON.parse(JSON.stringify(checkoutProcessState)));
-            showCheckoutModalPh1(); // This is the existing checkout modal, not a new sidebar for checkout
-            renderCheckoutStep1ItemSelection();
+    // --- Checkout Review Modal Functions ---
+    function populateCheckoutModal(cartData) {
+        console.log("[Checkout Modal] Attempting to POPULATE review modal. Received Cart data:", JSON.stringify(cartData));
+        if (!checkoutModalItemsContainer || !checkoutModalSubtotalEl) {
+            console.error("Checkout modal item/subtotal elements not found for populate.");
+            return;
+        }
+        cachedCartDataForModals = cartData; // Cache for reopening
+        if (!cartData || !cartData.items || cartData.items.length === 0) {
+            checkoutModalItemsContainer.innerHTML = '<p>Your cart is currently empty.</p>';
+            checkoutModalSubtotalEl.textContent = '0.00';
+            if(checkoutModalProceedBtn) checkoutModalProceedBtn.disabled = true;
+            return;
+        }
+
+        checkoutModalItemsContainer.innerHTML = ''; // Clear previous items
+        cartData.items.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.classList.add('checkout-modal-item');
+            itemEl.innerHTML = `
+                <span class="checkout-modal-item-name">${item.name || item.product_id}</span>
+                <span class="checkout-modal-item-qty">Qty: ${item.quantity}</span>
+                <span class="checkout-modal-item-price">$${(item.price_per_unit * item.quantity).toFixed(2)}</span>
+            `;
+            checkoutModalItemsContainer.appendChild(itemEl);
+        });
+        checkoutModalSubtotalEl.textContent = (cartData.subtotal || 0).toFixed(2);
+        if(checkoutModalProceedBtn) checkoutModalProceedBtn.disabled = false;
+    }
+
+    function openCheckoutReviewModal(cartData) {
+        console.log("[Checkout Modal] Attempting to OPEN review modal. Received Cart data:", JSON.stringify(cartData));
+        if (!checkoutReviewModal) {
+            console.error("Checkout review modal element not found. Cannot open.");
+            return;
+        }
+        console.log("[Checkout Modal] Opening review modal. Cart data (confirmed):", cartData);
+        populateCheckoutModal(cartData); // This will also cache cartData
+        
+        checkoutReviewModal.classList.remove('popping-out');
+        checkoutReviewModal.classList.add('popping-in');
+        checkoutReviewModal.style.display = 'flex';
+    }
+
+    function closeCheckoutReviewModal() {
+        return new Promise((resolve) => {
+            if (!checkoutReviewModal) {
+                resolve();
+                return;
+            }
+            checkoutReviewModal.classList.remove('popping-in');
+            checkoutReviewModal.classList.add('popping-out');
+            setTimeout(() => {
+                checkoutReviewModal.style.display = 'none';
+                checkoutReviewModal.classList.remove('popping-out');
+                resolve();
+            }, 300);
+        });
+    }
+
+    if (closeCheckoutReviewModalBtn) closeCheckoutReviewModalBtn.addEventListener('click', closeCheckoutReviewModal);
+    if (checkoutModalModifyBtn) {
+        checkoutModalModifyBtn.addEventListener('click', () => {
+            console.log("[Checkout Modal] Modify Cart button clicked.");
+            closeCheckoutReviewModal();
+        });
+    }
+    if (checkoutModalProceedBtn) {
+        checkoutModalProceedBtn.addEventListener('click', async () => {
+            console.log("[Checkout Review Modal] Proceed button clicked. Opening shipping modal.");
+            await closeCheckoutReviewModal();
+            openCheckoutShippingModal(); // Transition to shipping modal
+        });
+    }
+
+    // --- Shipping Modal Functions ---
+    function resetShippingModalUI() {
+        if(shippingRadioHome) shippingRadioHome.checked = false;
+        if(shippingRadioPickup) shippingRadioPickup.checked = false;
+        hidePickupLocationsList();
+        // Clear visual selection cues
+        document.querySelectorAll('.shipping-option.selected, .pickup-location-option.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        currentShippingSelection = {};
+        if(shippingContinueBtn) shippingContinueBtn.disabled = true; // Disable continue until a choice is made
+    }
+
+    function updateShippingSelectionUI(selection) {
+        currentShippingSelection = selection;
+        console.log("[Shipping Modal] Current selection updated:", currentShippingSelection);
+
+        // Remove 'selected' class from all options first
+        document.querySelectorAll('.shipping-option.selected, .pickup-location-option.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        if (selection.type === 'home_delivery' && shippingHomeDeliveryOpt) {
+            shippingHomeDeliveryOpt.classList.add('selected');
+        } else if (selection.type === 'pickup_initiated' && shippingPickupPointOpt) {
+            shippingPickupPointOpt.classList.add('selected');
+        } else if (selection.type === 'pickup_address' && selection.index !== undefined) {
+            if(shippingPickupPointOpt) shippingPickupPointOpt.classList.add('selected'); // Keep main pickup option selected
+            const selectedPickupEl = document.querySelector(`.pickup-location-option[data-index="${selection.index}"]`);
+            if (selectedPickupEl) selectedPickupEl.classList.add('selected');
+        }
+        if(shippingContinueBtn) shippingContinueBtn.disabled = !(currentShippingSelection.type === 'home_delivery' || currentShippingSelection.type === 'pickup_address');
+    }
+
+    function displayPickupLocationsList() {
+        if (!pickupLocationsListContainer) return;
+        pickupLocationsListContainer.innerHTML = '<h4>Select a Pickup Location:</h4>'; // Title for the list
+        staticPickupLocations.forEach((location, index) => {
+            const locEl = document.createElement('div');
+            locEl.classList.add('pickup-location-option');
+            locEl.dataset.index = index;
+            locEl.innerHTML = `
+                <input type="radio" name="pickup_location_radio" value="${index}" id="pickup-location-radio-${index}" style="display:none;">
+                <span class="location-name">${location.name}</span>
+                <span class="location-address">${location.address}</span>
+            `;
+            locEl.addEventListener('click', () => {
+                // Visually check the hidden radio for form semantics if ever needed, and for styling
+                const radio = locEl.querySelector('input[type="radio"]');
+                if(radio) radio.checked = true;
+                
+                updateShippingSelectionUI({ type: 'pickup_address', index: index, name: location.name, address: location.address });
+                window.parent.postMessage({ type: 'pickup_address_chosen', address_text: `${location.name} - ${location.address}`, address_index: index }, '*');
+            });
+            pickupLocationsListContainer.appendChild(locEl);
+        });
+        pickupLocationsListContainer.style.display = 'block';
+    }
+
+    function hidePickupLocationsList() {
+        if (pickupLocationsListContainer) {
+            pickupLocationsListContainer.style.display = 'none';
+            pickupLocationsListContainer.innerHTML = '<p>Loading pickup locations...</p>'; // Reset content
+        }
+    }
+
+    function openCheckoutShippingModal() {
+        if (!checkoutShippingModal) {
+            console.error("Checkout shipping modal element not found.");
+            return;
+        }
+        console.log("[Shipping Modal] Opening shipping modal.");
+        resetShippingModalUI();
+        checkoutShippingModal.classList.remove('popping-out');
+        checkoutShippingModal.classList.add('popping-in');
+        checkoutShippingModal.style.display = 'flex';
+    }
+
+    function closeCheckoutShippingModal() {
+        return new Promise((resolve) => {
+            if (!checkoutShippingModal) {
+                resolve();
+                return;
+            }
+            checkoutShippingModal.classList.remove('popping-in');
+            checkoutShippingModal.classList.add('popping-out');
+            setTimeout(() => {
+                checkoutShippingModal.style.display = 'none';
+                checkoutShippingModal.classList.remove('popping-out');
+                resolve();
+            }, 300);
+        });
+    }
+
+    if (closeCheckoutShippingModalBtn) closeCheckoutShippingModalBtn.addEventListener('click', closeCheckoutShippingModal);
+
+    if (shippingHomeDeliveryOpt) {
+        shippingHomeDeliveryOpt.addEventListener('click', () => {
+            if(shippingRadioHome) shippingRadioHome.checked = true; // Ensure radio is checked
+            updateShippingSelectionUI({ type: 'home_delivery' });
+            hidePickupLocationsList();
+            window.parent.postMessage({ type: 'shipping_option_chosen', choice: 'home_delivery' }, '*');
+        });
+    }
+    if (shippingPickupPointOpt) {
+        shippingPickupPointOpt.addEventListener('click', () => {
+            if(shippingRadioPickup) shippingRadioPickup.checked = true; // Ensure radio is checked
+            updateShippingSelectionUI({ type: 'pickup_initiated' });
+            displayPickupLocationsList();
+            window.parent.postMessage({ type: 'shipping_option_chosen', choice: 'pickup_initiated' }, '*');
+        });
+    }
+
+    if (shippingBackBtn) {
+        console.log("[Init] shippingBackBtn element FOUND. Attaching listener.");
+        shippingBackBtn.addEventListener('click', async () => {
+            console.log("[Shipping Modal] Back to Cart Review button CLICKED. Starting process.");
+            await closeCheckoutShippingModal();
+            console.log("[Shipping Modal] closeCheckoutShippingModal awaited.");
+            try {
+                console.log("[Shipping Modal] cachedCartDataForModals before decision:", JSON.stringify(cachedCartDataForModals));
+                let cartDataToDisplay;
+                if (cachedCartDataForModals) {
+                    cartDataToDisplay = cachedCartDataForModals;
+                    console.log("[Shipping Modal] Using cachedCartDataForModals.");
+                } else {
+                    console.log("[Shipping Modal] No cached data, attempting to fetchCart().");
+                    cartDataToDisplay = await fetchCart();
+                    console.log("[Shipping Modal] fetchCart() result:", JSON.stringify(cartDataToDisplay));
+                }
+                console.log("[Shipping Modal] cartDataToDisplay before opening review modal:", JSON.stringify(cartDataToDisplay));
+                openCheckoutReviewModal(cartDataToDisplay);
+            } catch (error) {
+                console.error("[Shipping Modal] Error in Back to Cart Review button logic:", error);
+                openCheckoutReviewModal({ items: [], subtotal: 0 }); // Fallback
+            }
+            window.parent.postMessage({ type: 'shipping_flow_interrupted', reason: 'back_to_cart_review' }, '*');
         });
     } else {
-        console.warn("[Cart Init] Sidebar checkout button not found.");
+        console.error("[Init] shippingBackBtn element NOT FOUND. Listener NOT attached.");
+    }
+    if (shippingContinueBtn) {
+        shippingContinueBtn.addEventListener('click', async () => { // Made this function async
+            console.log("[Shipping Modal] Continue to Payment button clicked. Current selection:", currentShippingSelection);
+            if (!currentShippingSelection.type || (currentShippingSelection.type === 'pickup_initiated')) {
+                alert("Please select a shipping option or a specific pickup location.");
+                return;
+            }
+            // alert("Proceeding to payment is not yet implemented."); // Will be handled by opening payment modal
+            await closeCheckoutShippingModal();
+            openCheckoutPaymentModal();
+        });
     }
 
-    function showCheckoutModalPh1() {
-        if (!checkoutModalPh1) {
-            console.error("[Checkout] Checkout modal element 'checkout-modal-ph1' not found.");
-            return;
+    // --- Payment Modal Functions ---
+    function resetPaymentModalUI() {
+        if (paymentRadioSaved) paymentRadioSaved.checked = true;
+        if (savedCardDetailsDiv) savedCardDetailsDiv.style.display = 'block';
+        if (newCardFormDiv) {
+            newCardFormDiv.style.display = 'none';
+            const inputs = newCardFormDiv.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => input.value = '');
         }
-        console.log("[Checkout] Showing modal with pop-in animation.");
-        checkoutModalPh1.classList.remove('popping-out'); // Remove pop-out if it was there
-        checkoutModalPh1.classList.add('popping-in');
-        checkoutModalPh1.style.display = 'flex'; // Set display to flex to make it visible for animation
-
-        // Optional: Remove 'popping-in' after animation to prevent re-triggering if called again
-        // However, 'animation-fill-mode: forwards' handles keeping the final state.
-        // If issues arise, an event listener for 'animationend' can remove 'popping-in'.
+        // Potentially disable confirm button until a valid state
+        if(paymentConfirmBtn) paymentConfirmBtn.disabled = false; // Default to enabled if saved card is an option
     }
 
-    function hideCheckoutModalPh1() {
-        if (!checkoutModalPh1) {
-            console.error("[Checkout] Checkout modal element 'checkout-modal-ph1' not found for hiding.");
+    function openCheckoutPaymentModal() {
+        if (!checkoutPaymentModal) {
+            console.error("Checkout payment modal element not found.");
             return;
         }
-        console.log("[Checkout] Hiding modal with pop-out animation.");
-        checkoutModalPh1.classList.remove('popping-in'); // Remove pop-in if it was there
-        checkoutModalPh1.classList.add('popping-out');
+        console.log("[Payment Modal] Opening payment modal.");
+        resetPaymentModalUI();
+        checkoutPaymentModal.classList.remove('popping-out');
+        checkoutPaymentModal.classList.add('popping-in');
+        checkoutPaymentModal.style.display = 'flex';
+    }
 
-        // Listen for animation end to set display: none
-        checkoutModalPh1.addEventListener('animationend', function handleAnimationEnd() {
-            console.log("[Checkout] Pop-out animation ended. Setting display to none.");
-            checkoutModalPh1.style.display = 'none';
-            checkoutModalPh1.classList.remove('popping-out'); // Clean up class
+    function closeCheckoutPaymentModal() {
+        return new Promise((resolve) => {
+            if (!checkoutPaymentModal) {
+                resolve();
+                return;
+            }
+            checkoutPaymentModal.classList.remove('popping-in');
+            checkoutPaymentModal.classList.add('popping-out');
+            setTimeout(() => {
+                checkoutPaymentModal.style.display = 'none';
+                checkoutPaymentModal.classList.remove('popping-out');
+                resolve();
+            }, 300);
+        });
+    }
+
+    if (closeCheckoutPaymentModalBtn) closeCheckoutPaymentModalBtn.addEventListener('click', closeCheckoutPaymentModal);
+
+    if (paymentRadioSaved) {
+        paymentRadioSaved.addEventListener('change', () => {
+            if (paymentRadioSaved.checked) {
+                if (savedCardDetailsDiv) savedCardDetailsDiv.style.display = 'block';
+                if (newCardFormDiv) newCardFormDiv.style.display = 'none';
+                if(paymentConfirmBtn) paymentConfirmBtn.disabled = false;
+            }
+        });
+    }
+
+    if (paymentRadioNew) {
+        paymentRadioNew.addEventListener('change', () => {
+            if (paymentRadioNew.checked) {
+                if (savedCardDetailsDiv) savedCardDetailsDiv.style.display = 'none';
+                if (newCardFormDiv) newCardFormDiv.style.display = 'block';
+                // Could disable confirm button until card is "saved"
+                if(paymentConfirmBtn) paymentConfirmBtn.disabled = true; 
+            }
+        });
+    }
+
+    if (saveCardBtn) {
+        saveCardBtn.addEventListener('click', () => {
+            // Simulate saving card
+            const cardNumberInput = document.getElementById('card-number');
+            if (cardNumberInput && cardNumberInput.value.trim() !== "") {
+                alert("Card details saved (simulated). You can now confirm payment.");
+                // Update saved card details display (optional, for more realism)
+                // For now, just enable confirm button
+                if(paymentConfirmBtn) paymentConfirmBtn.disabled = false;
+                // Optionally, switch back to "Use Saved Card" view
+                // if(paymentRadioSaved) paymentRadioSaved.checked = true;
+                // if (savedCardDetailsDiv) savedCardDetailsDiv.style.display = 'block';
+                // if (newCardFormDiv) newCardFormDiv.style.display = 'none';
+            } else {
+                alert("Please enter card details.");
+            }
+        });
+    }
+
+    if (paymentBackBtn) {
+        paymentBackBtn.addEventListener('click', async () => {
+            await closeCheckoutPaymentModal();
+            openCheckoutShippingModal(); // Go back to shipping
+        });
+    }
+
+    if (paymentConfirmBtn) {
+        paymentConfirmBtn.addEventListener('click', async () => { // Make async
+            console.log("[Payment Modal] Confirm Payment button clicked.");
             
-            // Clean up modal content and state after it's hidden
-            if (checkoutModalBodyPh1) checkoutModalBodyPh1.innerHTML = ''; 
-            if(checkoutModalTitlePh1) checkoutModalTitlePh1.textContent = 'Checkout'; 
-            checkoutProcessState = { 
-                currentStep: null, selectedItems: [],
-                shippingInfo: { method: null, address: { name: '', street: '', city: '', postalCode: '', country: '' }, pickupLocation: null, previousPickupLocations: [] },
-                paymentInfo: { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] },
-                orderTotal: 0 
+            // Gather data for the order
+            const customerId = DEFAULT_CUSTOMER_ID;
+            const itemsToOrder = cachedCartDataForModals ? cachedCartDataForModals.items : [];
+            const orderSubtotal = cachedCartDataForModals ? cachedCartDataForModals.subtotal : 0;
+
+            // Construct shipping details from currentShippingSelection
+            let shippingDetailsPayload = {
+                type: currentShippingSelection.type || "N/A",
+                address: "N/A",
+                notes: "No specific shipping notes."
             };
-            if(nextCheckoutBtnPh1) { nextCheckoutBtnPh1.onclick = null; nextCheckoutBtnPh1.textContent = 'Next'; nextCheckoutBtnPh1.disabled = false; nextCheckoutBtnPh1.style.display = 'inline-block';}
-            if(backCheckoutBtnPh1) { backCheckoutBtnPh1.onclick = null; backCheckoutBtnPh1.style.display = 'none'; }
-            // Restore cancel button's original purpose if it was changed (e.g. in confirmation step)
-            if(cancelCheckoutBtnPh1) { cancelCheckoutBtnPh1.textContent = 'Cancel'; cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1; }
+            if (currentShippingSelection.type === 'home_delivery') {
+                shippingDetailsPayload.address = "User's home address (placeholder)"; // Placeholder
+            } else if (currentShippingSelection.type === 'pickup_address') {
+                shippingDetailsPayload.address = `${currentShippingSelection.name}, ${currentShippingSelection.address}`;
+            }
 
+            const orderPayload = {
+                customer_id: customerId,
+                items: itemsToOrder,
+                shipping_details: shippingDetailsPayload,
+                total_amount: parseFloat(orderSubtotal) // Ensure it's a number
+            };
 
-            checkoutModalPh1.removeEventListener('animationend', handleAnimationEnd); // Clean up listener
-        }, { once: true }); // Ensure the listener runs only once
-    }
+            console.log("[Payment Modal] Order Payload for API:", orderPayload);
 
-    // Original content reset logic, now moved into the animationend handler for hideCheckoutModalPh1
-    /*
-    function hideCheckoutModalPh1_OLD_CONTENT_RESET_LOGIC() {
-        // if (checkoutModalPh1) checkoutModalPh1.style.display = 'none'; // This is now handled by animationend
-        // if (checkoutModalBodyPh1) checkoutModalBodyPh1.innerHTML = ''; 
-        // if(checkoutModalTitlePh1) checkoutModalTitlePh1.textContent = 'Checkout'; 
-        // checkoutProcessState = { 
-        //     currentStep: null, selectedItems: [],
-        //     shippingInfo: { method: null, address: { name: '', street: '', city: '', postalCode: '', country: '' }, pickupLocation: null, previousPickupLocations: [] },
-        //     paymentInfo: { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] },
-        //     orderTotal: 0 
-        // };
-        // if(nextCheckoutBtnPh1) { nextCheckoutBtnPh1.onclick = null; nextCheckoutBtnPh1.textContent = 'Next'; nextCheckoutBtnPh1.disabled = false; }
-        // if(backCheckoutBtnPh1) { backCheckoutBtnPh1.onclick = null; backCheckoutBtnPh1.style.display = 'none'; }
-        // if(cancelCheckoutBtnPh1) { cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1; cancelCheckoutBtnPh1.textContent = 'Cancel';}
-    }
-    */
+            try {
+                const result = await fetchAPI('/api/checkout/place_order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderPayload)
+                });
 
-    if (closeCheckoutModalBtnPh1) closeCheckoutModalBtnPh1.addEventListener('click', hideCheckoutModalPh1);
-    // Cancel button's initial behavior is to hide. It might be changed by renderOrderConfirmationStep.
-    if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.addEventListener('click', hideCheckoutModalPh1); 
-
-
-    function renderCheckoutStep1ItemSelection(itemsToShow) {
-        checkoutProcessState.currentStep = 'items';
-        const itemsToDisplay = (itemsToShow && itemsToShow.length > 0) ? itemsToShow : currentCartItemsData;
-        console.log("[Checkout] Step 1: Item Selection. Items:", itemsToDisplay);
-
-        if (!checkoutModalBodyPh1 || !checkoutModalTitlePh1) return;
-        checkoutModalTitlePh1.textContent = 'Step 1: Review Your Items';
-        
-        if (!itemsToDisplay || itemsToDisplay.length === 0) {
-            checkoutModalBodyPh1.innerHTML = '<p>Your cart is empty. Please add items to proceed.</p>';
-            if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.disabled = true;
-            checkoutProcessState.selectedItems = []; 
-        } else {
-            let itemsHtml = '<h3>Review Your Items</h3><ul class="checkout-item-list">';
-            itemsToDisplay.forEach(item => {
-                const itemName = item.name || (localProductCache[item.product_id]?.name || `Product ID: ${item.product_id}`);
-                const pricePerUnit = item.price_per_unit || (localProductCache[item.product_id]?.price || 0);
-                itemsHtml += `
-                    <li class="checkout-item" data-product-id="${item.product_id}">
-                        <span class="item-name">${itemName}</span>
-                        <span class="item-quantity">Qty: ${item.quantity}</span>
-                        <span class="item-price">$${(pricePerUnit * item.quantity).toFixed(2)}</span>
-                    </li>`;
-            });
-            itemsHtml += '</ul>';
-            const subtotal = itemsToDisplay.reduce((sum, item) => sum + ((item.price_per_unit || (localProductCache[item.product_id]?.price || 0)) * item.quantity), 0);
-            itemsHtml += `<p class="checkout-subtotal">Subtotal: $${subtotal.toFixed(2)}</p>`;
-            checkoutModalBodyPh1.innerHTML = itemsHtml;
-            if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.disabled = false;
-            checkoutProcessState.selectedItems = JSON.parse(JSON.stringify(itemsToDisplay.map(item => ({
-                ...item, price_per_unit: item.price_per_unit || (localProductCache[item.product_id]?.price || 0)
-            }))));
-        }
-
-        if (nextCheckoutBtnPh1) {
-            nextCheckoutBtnPh1.textContent = 'Next: Shipping';
-            nextCheckoutBtnPh1.onclick = () => renderShippingStep();
-        }
-        if (backCheckoutBtnPh1) backCheckoutBtnPh1.style.display = 'none';
-        if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1;
-    }
-
-    function renderShippingStep() {
-        checkoutProcessState.currentStep = 'shipping';
-        console.log("[Checkout] Step 2: Shipping Options. State:", checkoutProcessState.shippingInfo);
-
-        if (!checkoutModalBodyPh1 || !checkoutModalTitlePh1) return;
-        checkoutModalTitlePh1.textContent = 'Step 2: Shipping Options';
-
-        const shipInfo = checkoutProcessState.shippingInfo;
-        const addr = shipInfo.address;
-        const hasPreviousPickupLocations = shipInfo.previousPickupLocations && shipInfo.previousPickupLocations.length > 0;
-
-        let shippingHtml = `
-            <h3>Shipping Method</h3>
-            <div class="shipping-method-options">
-                <label><input type="radio" name="shippingMethod" value="home" ${shipInfo.method === 'home' ? 'checked' : ''}> Home Delivery</label>
-                <label><input type="radio" name="shippingMethod" value="pickup" ${shipInfo.method === 'pickup' ? 'checked' : ''}> Store Pick-up</label>
-            </div>
-            <div id="home-delivery-details" style="display: ${shipInfo.method === 'home' ? 'block' : 'none'};">
-                <h4>Home Delivery Address</h4>
-                <label for="shipping-name">Full Name:</label><input type="text" id="shipping-name" value="${addr.name || ''}">
-                <label for="shipping-street">Street:</label><input type="text" id="shipping-street" value="${addr.street || ''}">
-                <label for="shipping-city">City:</label><input type="text" id="shipping-city" value="${addr.city || ''}">
-                <label for="shipping-postalCode">Postal Code:</label><input type="text" id="shipping-postalCode" value="${addr.postalCode || ''}">
-                <label for="shipping-country">Country:</label><input type="text" id="shipping-country" value="${addr.country || ''}">
-            </div>`;
-        
-        if (shipInfo.method === 'pickup' && hasPreviousPickupLocations) {
-            shippingHtml += `<div id="pickup-location-details-container" style="display: block;"><h4>Select Pick-up Location</h4>`;
-            shipInfo.previousPickupLocations.forEach(loc => {
-                shippingHtml += `<label><input type="radio" name="pickupLocationOption" value="${loc}" ${shipInfo.pickupLocation === loc ? 'checked' : ''}> ${loc}</label><br>`;
-            });
-            shippingHtml += `</div>`;
-        } else {
-            shippingHtml += `<div id="pickup-location-details-container" style="display: none;"></div>`; // Empty placeholder
-        }
-        
-        shippingHtml += `<div id="pickup-message-placeholder" style="display: ${shipInfo.method === 'pickup' && !hasPreviousPickupLocations ? 'block' : 'none'};">
-                            <p>Agent will provide pickup locations if this option is chosen.</p>
-                         </div>`;
-        checkoutModalBodyPh1.innerHTML = shippingHtml;
-
-        const homeDeliveryDiv = checkoutModalBodyPh1.querySelector('#home-delivery-details');
-        let pickupLocationsDiv = checkoutModalBodyPh1.querySelector('#pickup-location-details-container');
-        const pickupPlaceholderDiv = checkoutModalBodyPh1.querySelector('#pickup-message-placeholder');
-
-        // Function to clear selection animation from other options
-        function clearSelectionAnimation(selector) {
-            checkoutModalBodyPh1.querySelectorAll(selector).forEach(el => {
-                const parentLabel = el.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.remove('option-selected-visual-cue');
-                }
-            });
-        }
-
-        checkoutModalBodyPh1.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                clearSelectionAnimation('input[name="shippingMethod"]');
-                clearSelectionAnimation('input[name="pickupLocationOption"]'); // Also clear pickup if method changes
-                const parentLabel = e.target.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.add('option-selected-visual-cue');
-                }
-
-                shipInfo.method = e.target.value;
-                homeDeliveryDiv.style.display = shipInfo.method === 'home' ? 'block' : 'none';
-                
-                if (shipInfo.method === 'pickup') {
-                    if (hasPreviousPickupLocations) {
-                        pickupLocationsDiv.style.display = 'block';
-                        pickupPlaceholderDiv.style.display = 'none';
-                        // If there are previous locations, a selection is needed.
-                        // Check if one is already selected from checkoutProcessState
-                        const currentlySelectedPickup = checkoutModalBodyPh1.querySelector('input[name="pickupLocationOption"]:checked');
-                        if (currentlySelectedPickup) {
-                            currentlySelectedPickup.closest('label').classList.add('option-selected-visual-cue');
-                        }
-                    } else {
-                        pickupLocationsDiv.style.display = 'none';
-                        pickupPlaceholderDiv.style.display = 'block';
-                    }
+                if (result.status === "success") {
+                    alert(`Order Submitted Successfully! Your Order ID: ${result.order_id}`);
+                    await closeCheckoutPaymentModal();
+                    await fetchCart(); // Refresh cart display (will be empty)
+                    // Optionally, navigate to a dedicated order confirmation page or show a more persistent message
                 } else {
-                    pickupLocationsDiv.style.display = 'none';
-                    pickupPlaceholderDiv.style.display = 'none';
+                    alert(`Order submission failed: ${result.message || 'Unknown error'}`);
                 }
-                if (shipInfo.method === 'home') shipInfo.pickupLocation = null; else Object.keys(addr).forEach(k => addr[k] = '');
-                nextCheckoutBtnPh1.disabled = !(shipInfo.method === 'home' || (shipInfo.method === 'pickup' && (shipInfo.pickupLocation || !hasPreviousPickupLocations)));
-            });
-            // Apply initial selection glow if a method is already selected
-            if (radio.checked) {
-                const parentLabel = radio.closest('label');
-                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
+            } catch (error) {
+                console.error("[Payment Modal] Error submitting order:", error);
+                alert(`Error submitting order: ${error.message}`);
             }
         });
-        ['name', 'street', 'city', 'postalCode', 'country'].forEach(id => {
-            checkoutModalBodyPh1.querySelector(`#shipping-${id}`)?.addEventListener('input', e => { addr[id] = e.target.value; });
-        });
-        checkoutModalBodyPh1.querySelectorAll('input[name="pickupLocationOption"]')?.forEach(radio => {
-            radio.addEventListener('change', e => {
-                clearSelectionAnimation('input[name="pickupLocationOption"]');
-                const parentLabel = e.target.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.add('option-selected-visual-cue');
-                }
-                shipInfo.pickupLocation = e.target.value;
-                nextCheckoutBtnPh1.disabled = false;
-            });
-             // Apply initial selection glow if a pickup location is already selected
-            if (radio.checked) {
-                const parentLabel = radio.closest('label');
-                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
-            }
-        });
-        
-        if(nextCheckoutBtnPh1) {
-            nextCheckoutBtnPh1.textContent = 'Next';
-            nextCheckoutBtnPh1.disabled = !(shipInfo.method === 'home' || (shipInfo.method === 'pickup' && (shipInfo.pickupLocation || !hasPreviousPickupLocations)));
-            nextCheckoutBtnPh1.onclick = () => {
-                if (shipInfo.method === 'home') {
-                    if (Object.values(addr).some(v => !v.trim())) { alert("Please fill all address fields."); return; }
-                    renderPaymentStep();
-                } else if (shipInfo.method === 'pickup') {
-                    if (hasPreviousPickupLocations && !shipInfo.pickupLocation) { alert("Please select a pickup location."); return; }
-                    if (shipInfo.pickupLocation || !hasPreviousPickupLocations) renderPaymentStep();
-                    else alert("Waiting for agent to provide pickup locations.");
-                } else {
-                    alert("Please select a shipping method.");
-                }
-            };
-        }
-        if(backCheckoutBtnPh1) {
-            backCheckoutBtnPh1.style.display = 'inline-block';
-            backCheckoutBtnPh1.textContent = 'Back: Items';
-            backCheckoutBtnPh1.onclick = () => renderCheckoutStep1ItemSelection(checkoutProcessState.selectedItems);
-        }
-        if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1;
     }
-
-    function renderPickupLocationsStep(locations = []) {
-        checkoutProcessState.currentStep = 'pickup_location';
-        checkoutProcessState.shippingInfo.method = 'pickup'; 
-        console.log("[Checkout] Step 2b: Pick-up Locations. Locations:", locations);
-
-        if (!checkoutModalBodyPh1 || !checkoutModalTitlePh1) return;
-        checkoutModalTitlePh1.textContent = 'Step 2b: Select Pick-up Location';
-        checkoutProcessState.shippingInfo.previousPickupLocations = locations;
-
-        let pickupHtml = `<h3>Select Pick-up Location</h3>`;
-        if (!locations || locations.length === 0) {
-            pickupHtml += `<p>No pick-up locations available. Please select home delivery or ask the agent for help.</p>`;
-            if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.disabled = true;
-        } else {
-            pickupHtml += `<div id="pickup-location-options">`;
-            locations.forEach(loc => {
-                const isChecked = checkoutProcessState.shippingInfo.pickupLocation === loc;
-                pickupHtml += `<label><input type="radio" name="pickupLocationOption" value="${loc}" ${isChecked ? 'checked' : ''}> ${loc}</label><br>`;
-            });
-            pickupHtml += `</div>`;
-            if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.disabled = !checkoutProcessState.shippingInfo.pickupLocation;
-        }
-        checkoutModalBodyPh1.innerHTML = pickupHtml;
-
-        // Function to clear selection animation from other options
-        function clearPickupSelectionAnimation() {
-            checkoutModalBodyPh1.querySelectorAll('input[name="pickupLocationOption"]').forEach(el => {
-                const parentLabel = el.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.remove('option-selected-visual-cue');
-                }
-            });
-        }
-
-        checkoutModalBodyPh1.querySelectorAll('input[name="pickupLocationOption"]').forEach(radio => {
-            radio.addEventListener('change', e => { 
-                clearPickupSelectionAnimation();
-                const parentLabel = e.target.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.add('option-selected-visual-cue');
-                }
-                checkoutProcessState.shippingInfo.pickupLocation = e.target.value; 
-                if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.disabled = false;
-            });
-            // Apply initial selection glow if a location is already selected
-            if (radio.checked) {
-                const parentLabel = radio.closest('label');
-                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
-            }
-        });
-
-        if(nextCheckoutBtnPh1) {
-            nextCheckoutBtnPh1.textContent = 'Next: Payment';
-            nextCheckoutBtnPh1.onclick = () => {
-                if (!checkoutProcessState.shippingInfo.pickupLocation) { alert("Please select a pick-up location."); return; }
-                renderPaymentStep();
-            };
-        }
-        if(backCheckoutBtnPh1) {
-            backCheckoutBtnPh1.style.display = 'inline-block';
-            backCheckoutBtnPh1.textContent = 'Back: Shipping Method';
-            backCheckoutBtnPh1.onclick = () => renderShippingStep();
-        }
-        if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1;
-    }
-
-    function renderPaymentStep(paymentMethodsPayload) { 
-        checkoutProcessState.currentStep = 'payment';
-        console.log("[Checkout] Step 3: Payment Info. Payload:", paymentMethodsPayload, "State:", checkoutProcessState.paymentInfo);
-        
-        if (!checkoutProcessState.paymentInfo) { 
-            checkoutProcessState.paymentInfo = { method: null, savedCardId: null, newCardDetails: { cardNumber: '', expiryDate: '', cvv: '', cardholderName: '' }, previousPaymentMethods: [] };
-        }
-        if (paymentMethodsPayload) checkoutProcessState.paymentInfo.previousPaymentMethods = paymentMethodsPayload;
-
-        if (!checkoutModalBodyPh1 || !checkoutModalTitlePh1) return;
-        checkoutModalTitlePh1.textContent = 'Step 3: Payment Information';
-
-        const payInfo = checkoutProcessState.paymentInfo;
-        const newCard = payInfo.newCardDetails;
-        
-        let paymentHtml = `
-            <h3>Payment Method</h3>
-            <div class="payment-method-options">
-                <label><input type="radio" name="paymentMethod" value="savedCard" ${payInfo.method === 'savedCard' ? 'checked' : ''}> Use Saved Card</label>
-                <label><input type="radio" name="paymentMethod" value="newCard" ${payInfo.method === 'newCard' ? 'checked' : ''}> Add New Card</label>
-            </div>
-            <div id="saved-card-details" style="display: ${payInfo.method === 'savedCard' ? 'block' : 'none'};">
-                <h4>Select Saved Card</h4>
-                <label><input type="radio" name="savedCardOption" value="visa-1234" ${payInfo.savedCardId === 'visa-1234' ? 'checked' : ''}> Visa ****1234</label><br>
-                <label><input type="radio" name="savedCardOption" value="mastercard-5678" ${payInfo.savedCardId === 'mastercard-5678' ? 'checked' : ''}> Mastercard ****5678</label>
-            </div>
-            <div id="new-card-details" style="display: ${payInfo.method === 'newCard' ? 'block' : 'none'};">
-                <h4>New Card Details</h4>
-                <label for="card-number">Card Number:</label><input type="text" id="card-number" value="${newCard.cardNumber || ''}">
-                <label for="card-expiry">Expiry (MM/YY):</label><input type="text" id="card-expiry" value="${newCard.expiryDate || ''}">
-                <label for="card-cvv">CVV:</label><input type="text" id="card-cvv" value="${newCard.cvv || ''}">
-                <label for="cardholder-name">Name:</label><input type="text" id="cardholder-name" value="${newCard.cardholderName || ''}">
-            </div>`;
-        checkoutModalBodyPh1.innerHTML = paymentHtml;
-
-        const savedCardDiv = checkoutModalBodyPh1.querySelector('#saved-card-details');
-        const newCardDiv = checkoutModalBodyPh1.querySelector('#new-card-details');
-
-        // Function to clear selection animation from other options
-        function clearPaymentSelectionAnimation(selector) {
-            checkoutModalBodyPh1.querySelectorAll(selector).forEach(el => {
-                const parentLabel = el.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.remove('option-selected-visual-cue');
-                }
-            });
-        }
-
-        checkoutModalBodyPh1.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
-            radio.addEventListener('change', e => {
-                clearPaymentSelectionAnimation('input[name="paymentMethod"]');
-                clearPaymentSelectionAnimation('input[name="savedCardOption"]'); // Also clear saved card if method changes
-
-                const parentLabel = e.target.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.add('option-selected-visual-cue');
-                }
-
-                payInfo.method = e.target.value;
-                savedCardDiv.style.display = payInfo.method === 'savedCard' ? 'block' : 'none';
-                newCardDiv.style.display = payInfo.method === 'newCard' ? 'block' : 'none';
-                if (payInfo.method === 'savedCard') {
-                    Object.keys(newCard).forEach(k => newCard[k] = '');
-                    // Check if a saved card is already selected to apply glow
-                    const currentlySelectedSavedCard = checkoutModalBodyPh1.querySelector('input[name="savedCardOption"]:checked');
-                    if (currentlySelectedSavedCard) {
-                        currentlySelectedSavedCard.closest('label').classList.add('option-selected-visual-cue');
-                    }
-                } else {
-                    payInfo.savedCardId = null;
-                }
-                nextCheckoutBtnPh1.disabled = !(payInfo.method === 'newCard' || (payInfo.method === 'savedCard' && payInfo.savedCardId));
-            });
-            // Apply initial selection glow if a payment method is already selected
-            if (radio.checked) {
-                const parentLabel = radio.closest('label');
-                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
-            }
-        });
-        checkoutModalBodyPh1.querySelectorAll('input[name="savedCardOption"]')?.forEach(radio => {
-            radio.addEventListener('change', e => { 
-                clearPaymentSelectionAnimation('input[name="savedCardOption"]');
-                const parentLabel = e.target.closest('label');
-                if (parentLabel) {
-                    parentLabel.classList.add('option-selected-visual-cue');
-                }
-
-                payInfo.savedCardId = e.target.value; 
-                nextCheckoutBtnPh1.disabled = false; 
-                console.log('[Checkout] Dispatching checkoutPaymentSelected event (savedCard): ', payInfo.savedCardId);
-                document.dispatchEvent(new CustomEvent('checkoutPaymentSelected', {
-                    detail: { // Corrected: payload is in event.detail
-                        method: "savedCard",
-                        id: payInfo.savedCardId,
-                        display_name: e.target.parentElement.textContent.trim()
-                    }
-                }));
-            });
-            // Apply initial selection glow if a saved card is already selected
-            if (radio.checked) {
-                const parentLabel = radio.closest('label');
-                if (parentLabel) parentLabel.classList.add('option-selected-visual-cue');
-            }
-        });
-        ['cardNumber', 'expiryDate', 'cvv', 'cardholderName'].forEach(id => {
-            const inputId = id === 'cardNumber' ? 'card-number' : id === 'expiryDate' ? 'card-expiry' : id === 'cardholderName' ? 'cardholder-name' : `card-${id}`;
-            checkoutModalBodyPh1.querySelector(`#${inputId}`)?.addEventListener('input', e => { newCard[id] = e.target.value; });
-        });
-        
-        if(nextCheckoutBtnPh1) {
-            nextCheckoutBtnPh1.textContent = 'Next: Review Order';
-            nextCheckoutBtnPh1.disabled = !(payInfo.method === 'newCard' || (payInfo.method === 'savedCard' && payInfo.savedCardId));
-            nextCheckoutBtnPh1.onclick = () => {
-                if (payInfo.method === 'newCard') {
-                    // Validations for new card
-                    if (Object.values(newCard).some(v => !v.trim())) { alert("Please fill all card details."); return; }
-                    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(newCard.expiryDate.trim())) { alert("Please enter expiry date in MM/YY format."); return; }
-                    
-                    console.log('[Checkout] Dispatching checkoutPaymentSelected event (newCard).');
-                    document.dispatchEvent(new CustomEvent('checkoutPaymentSelected', {
-                        detail: { // Corrected: payload is in event.detail
-                            method: "newCard",
-                            status: "filled_and_validated"
-                        }
-                    }));
-                    renderOrderReviewStep(); // Proceed to next step
-                } else if (payInfo.method === 'savedCard' && payInfo.savedCardId) {
-                    // For saved card, event was already dispatched on selection. Just proceed.
-                    renderOrderReviewStep();
-                } else {
-                    // If no valid method is selected (should be caught by button disable logic, but as a fallback)
-                    alert("Please select a payment option.");
-                }
-            };
-        }
-        if(backCheckoutBtnPh1) {
-            backCheckoutBtnPh1.style.display = 'inline-block';
-            backCheckoutBtnPh1.textContent = 'Back: Shipping';
-            backCheckoutBtnPh1.onclick = () => {
-                if (checkoutProcessState.shippingInfo.method === 'pickup') {
-                     renderPickupLocationsStep(checkoutProcessState.shippingInfo.previousPickupLocations || []);
-                } else { 
-                    renderShippingStep();
-                }
-            };
-        }
-        if (cancelCheckoutBtnPh1) cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1;
-    }
-
-    function renderOrderReviewStep() {
-        checkoutProcessState.currentStep = 'review';
-        console.log("[Checkout] Step 4: Order Review. State:", checkoutProcessState);
-
-        if (!checkoutModalBodyPh1 || !checkoutModalTitlePh1) return;
-        checkoutModalTitlePh1.textContent = 'Step 4: Order Review & Submit';
-
-        const { selectedItems, shippingInfo, paymentInfo } = checkoutProcessState;
-        let reviewHtml = '<h3>Order Summary</h3><h4>Items:</h4><ul class="checkout-item-list">';
-        let subtotal = 0;
-        selectedItems.forEach(item => {
-            const itemPrice = item.price_per_unit || (localProductCache[item.product_id]?.price || 0);
-            const itemQuantity = item.quantity || 0;
-            const itemTotal = itemPrice * itemQuantity;
-            subtotal += itemTotal;
-            reviewHtml += `<li class="checkout-item"><span class="item-name">${item.name || `ID: ${item.product_id}`} (Qty: ${itemQuantity})</span><span class="item-price">$${itemTotal.toFixed(2)}</span></li>`;
-        });
-        reviewHtml += `</ul><p class="checkout-subtotal"><strong>Subtotal: $${subtotal.toFixed(2)}</strong></p><h4>Shipping:</h4>`;
-        if (shippingInfo.method === 'home') {
-            reviewHtml += `<p>Home Delivery: ${shippingInfo.address.name}, ${shippingInfo.address.street}, ${shippingInfo.address.city}, ${shippingInfo.address.postalCode}, ${shippingInfo.address.country}</p>`;
-        } else if (shippingInfo.method === 'pickup') {
-            reviewHtml += `<p>Pick-up at: ${shippingInfo.pickupLocation}</p>`;
-        }
-        reviewHtml += `<h4>Payment:</h4>`;
-        if (paymentInfo.method === 'savedCard') reviewHtml += `<p>Saved Card: ${paymentInfo.savedCardId.includes('visa') ? 'Visa ****1234' : 'Mastercard ****5678'}</p>`;
-        else if (paymentInfo.method === 'newCard') reviewHtml += `<p>New Card: **** **** **** ${paymentInfo.newCardDetails.cardNumber.slice(-4)}</p>`;
-        
-        checkoutProcessState.orderTotal = subtotal;
-        reviewHtml += `<h4 class="checkout-total-amount">Total: $${checkoutProcessState.orderTotal.toFixed(2)}</h4>`;
-        checkoutModalBodyPh1.innerHTML = reviewHtml;
-
-        if(nextCheckoutBtnPh1) {
-            nextCheckoutBtnPh1.textContent = 'Submit Order';
-            nextCheckoutBtnPh1.disabled = false;
-            nextCheckoutBtnPh1.style.display = 'inline-block'; // Ensure it's visible
-            nextCheckoutBtnPh1.onclick = handleOrderSubmission;
-        }
-        if(backCheckoutBtnPh1) {
-            backCheckoutBtnPh1.style.display = 'inline-block';
-            backCheckoutBtnPh1.textContent = 'Back: Payment';
-            backCheckoutBtnPh1.onclick = () => renderPaymentStep(checkoutProcessState.paymentInfo.previousPaymentMethods);
-        }
-        // cancelCheckoutBtnPh1.onclick is managed by hideCheckoutModalPh1 or confirmation step
-    }
-
-    async function handleOrderSubmission() {
-        console.log("[Checkout][Submission] Submitting order. State:", checkoutProcessState);
-        const { selectedItems, shippingInfo, paymentInfo, orderTotal } = checkoutProcessState;
-        let apiShipping = { method: shippingInfo.method };
-        if (shippingInfo.method === 'home') apiShipping.address = { ...shippingInfo.address, postal_code: shippingInfo.address.postalCode };
-        else apiShipping.pickup_location_id = shippingInfo.pickupLocation;
-        
-        let apiPayment = { method: paymentInfo.method };
-        if (paymentInfo.method === 'newCard') apiPayment.card_info_last4 = paymentInfo.newCardDetails.cardNumber.slice(-4);
-        else if (paymentInfo.method === 'savedCard') {
-            apiPayment.saved_card_id = paymentInfo.savedCardId;
-            if(paymentInfo.savedCardId) apiPayment.card_info_last4 = paymentInfo.savedCardId.split('-').pop();
-        }
-
-        const orderPayload = {
-            customer_id: DEFAULT_CUSTOMER_ID,
-            items: selectedItems.map(item => ({ product_id: item.product_id, quantity: item.quantity, price_per_unit: item.price_per_unit || 0 })),
-            shipping_details: apiShipping, payment_details: apiPayment, total_amount: orderTotal
-        };
-        try {
-            const response = await fetchAPI('/api/orders/place_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderPayload) });
-            renderOrderConfirmationStep(response.order_id || response.orderId || "N/A");
-            await clearCart();
-        } catch (error) {
-            if (checkoutModalBodyPh1) checkoutModalBodyPh1.innerHTML += `<p style="color:red;">Error: ${error.message}</p>`;
-            if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.disabled = false;
-        }
-    }
-
-    function renderOrderConfirmationStep(orderId) {
-        checkoutProcessState.currentStep = 'confirmation';
-        console.log("[Checkout][Confirmation] Order Confirmed. ID:", orderId);
-        if (!checkoutModalBodyPh1 || !checkoutModalTitlePh1) return;
-        checkoutModalTitlePh1.textContent = 'Order Confirmed!';
-        checkoutModalBodyPh1.innerHTML = 
-            `<div class="order-confirmation-content" style="text-align:center;padding:20px;">
-                <h2>Thank you!</h2>
-                <p>Your Order ID is: <strong>${orderId}</strong></p>
-            </div>`;
-        if(nextCheckoutBtnPh1) nextCheckoutBtnPh1.style.display = 'none'; // Hide Next button
-        if(backCheckoutBtnPh1) backCheckoutBtnPh1.style.display = 'none'; // Hide Back button
-        if(cancelCheckoutBtnPh1) { // Change Cancel to Close
-            cancelCheckoutBtnPh1.textContent = 'Close';
-            // Ensure this click still triggers the pop-out animation
-            cancelCheckoutBtnPh1.onclick = hideCheckoutModalPh1; 
-        }
-    }
+    
+    // All checkout related functions, dummy data, and event listeners previously here are now removed.
 
     // Remove or comment out the OLD checkout modal logic if it's truly not needed elsewhere
     // For example, openCheckoutModal_OLD(), closeCheckoutModal_OLD(), etc.

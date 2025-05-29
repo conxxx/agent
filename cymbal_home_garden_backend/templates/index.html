@@ -20,7 +20,7 @@
         <div class="cart-sidebar-footer">
             <p>Subtotal: $<span id="cart-sidebar-subtotal">0.00</span></p>
             <button id="cart-sidebar-clear-btn">Clear Cart</button>
-            <button id="cart-sidebar-checkout-btn">Checkout</button>
+            <!-- <button id="cart-sidebar-checkout-btn">Checkout</button> --> <!-- REMOVED -->
         </div>
     </aside>
     <header>
@@ -70,21 +70,95 @@
         </section>
     </main>
 
-    <!-- Phase 1: Checkout Modal -->
-    <div id="checkout-modal-ph1" class="checkout-modal" style="display:none;">
-        <div class="checkout-modal-content-ph1">
-            <div class="checkout-modal-header-ph1">
-                <h2 id="checkout-modal-title-ph1">Checkout</h2>
-                <span id="checkout-modal-close-ph1" class="close-button">&times;</span>
+    <!-- Phase 1: Checkout Modal - REMOVED -->
+    <!-- <div id="checkout-modal-ph1" class="checkout-modal" style="display:none;"> ... </div> -->
+
+    <!-- Checkout Modal -->
+    <div id="checkout-review-modal" class="checkout-modal" style="display:none;">
+        <div class="checkout-modal-content">
+            <span class="checkout-modal-close-btn">&times;</span>
+            <h2>Review Your Cart</h2>
+            <div id="checkout-modal-items-container">
+                <!-- Cart items will be dynamically inserted here -->
+                <p>Loading cart...</p>
             </div>
-            <div id="checkout-modal-body-ph1" class="checkout-modal-body-ph1">
-                <!-- Step content will be dynamically inserted here -->
-                <p>Loading checkout...</p>
+            <div class="checkout-modal-summary">
+                <p>Subtotal: $<span id="checkout-modal-subtotal">0.00</span></p>
             </div>
-            <div class="checkout-modal-footer-ph1">
-                <button id="checkout-back-btn-ph1" style="display:none;">Back</button>
-                <button id="checkout-cancel-btn-ph1">Cancel</button>
-                <button id="checkout-next-btn-ph1">Next</button>
+            <div class="checkout-modal-actions">
+                <button id="checkout-modal-modify-btn">Modify Cart</button>
+                <button id="checkout-modal-proceed-btn">Proceed (Next Step)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipping Modal -->
+    <div id="checkout-shipping-modal" class="checkout-modal" style="display:none;">
+        <div class="checkout-modal-content">
+            <span class="checkout-modal-close-btn">&times;</span>
+            <h2>Shipping Options</h2>
+            <div class="shipping-options-container">
+                <div class="shipping-option" id="shipping-home-delivery" data-value="home_delivery">
+                    <input type="radio" name="shipping_option_radio" value="home_delivery" id="shipping-radio-home">
+                    <label for="shipping-radio-home">Home Delivery</label>
+                </div>
+                <div class="shipping-option" id="shipping-pickup-point" data-value="pickup_point">
+                    <input type="radio" name="shipping_option_radio" value="pickup_point" id="shipping-radio-pickup">
+                    <label for="shipping-radio-pickup">Pickup Point</label>
+                </div>
+            </div>
+            <div id="pickup-locations-list" style="display:none;" class="pickup-locations-container">
+                <!-- Pickup locations will be dynamically inserted here -->
+                <p>Loading pickup locations...</p>
+            </div>
+            <div class="checkout-modal-actions">
+                <button id="shipping-back-btn">Back to Cart Review</button>
+                <button id="shipping-continue-btn">Continue to Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="checkout-payment-modal" class="checkout-modal" style="display:none;">
+        <div class="checkout-modal-content">
+            <span class="checkout-modal-close-btn">&times;</span>
+            <h2>Payment Options</h2>
+            <div class="payment-options-container">
+                <div class="payment-option">
+                    <input type="radio" name="payment_method_radio" value="saved_card" id="payment-radio-saved" checked>
+                    <label for="payment-radio-saved">Use Saved Card</label>
+                    <div id="saved-card-details" class="card-details-form">
+                        <p>Visa **** **** **** 1234</p>
+                        <p>Expires: 12/2028</p>
+                    </div>
+                </div>
+                <div class="payment-option">
+                    <input type="radio" name="payment_method_radio" value="new_card" id="payment-radio-new">
+                    <label for="payment-radio-new">Add a New Card</label>
+                    <div id="new-card-form" style="display:none;" class="card-details-form">
+                        <div class="form-group">
+                            <label for="card-number">Card Number</label>
+                            <input type="text" id="card-number" name="card-number" placeholder="Enter card number">
+                        </div>
+                        <div class="form-group">
+                            <label for="card-expiry">Expiry Date (MM/YY)</label>
+                            <input type="text" id="card-expiry" name="card-expiry" placeholder="MM/YY">
+                        </div>
+                        <div class="form-group">
+                            <label for="card-cvc">CVC</label>
+                            <input type="text" id="card-cvc" name="card-cvc" placeholder="CVC">
+                        </div>
+                        <div class="form-group">
+                            <label for="card-name">Name on Card</label>
+                            <input type="text" id="card-name" name="card-name" placeholder="Name on card">
+                        </div>
+                        <button id="save-card-btn" class="btn-secondary">Save Card</button>
+                    </div>
+                </div>
+            </div>
+            <div class="checkout-modal-actions">
+                <button id="payment-back-btn">Back to Shipping</button>
+                <button id="payment-confirm-btn">Confirm Payment</button>
             </div>
         </div>
     </div>

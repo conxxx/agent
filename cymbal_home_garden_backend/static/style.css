@@ -468,6 +468,7 @@ footer {
     border-bottom: 1px solid var(--current-card-border);
     padding: 10px 0;
 }
+*/
 
 .cart-item {
     display: flex;
@@ -591,6 +592,9 @@ footer {
     font-size: 0.8rem;
 }
 
+/* START OF COMMENTED OUT PH1 CHECKOUT STYLES */
+/* START OF COMMENTED OUT PH1 CHECKOUT STYLES */
+/* START OF COMMENTED OUT PH1 CHECKOUT STYLES */
 /* Checkout Modal Styles */
 #checkout-modal .modal-content {
     max-width: 700px; 
@@ -966,27 +970,28 @@ body.night-mode .product-info-column .price {
 /* Phase 1 Checkout Modal Styles - Centered Modal */
 .checkout-modal {
     /* display: none; /* JS will control display via style.display */
-    position: fixed;
+    position: fixed !important;
     z-index: 9990; /* High z-index */
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%; /* Responsive width */
-    max-width: 600px; /* Max width for the modal */
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%); /* Initial transform is part of the animation setup */
+    width: auto; /* Use max-width to control size */
+    max-width: 1000px; /* Further Increased Max width */
     min-width: 300px; /* Min width */
+    min-height: 550px; /* Added min-height for rectangular shape */
     max-height: 90vh; /* Max height to prevent overflow */
-    background-color: var(--current-glass-bg); /* Glassmorphism background */
-    box-shadow: 0 8px 32px 0 var(--current-glass-shadow); /* Glassmorphism shadow */
-    backdrop-filter: blur(var(--current-glass-blur));
-    -webkit-backdrop-filter: blur(var(--current-glass-blur)); /* For Safari */
+    background-color: var(--current-modal-bg); /* Ensured solid background */
+    box-shadow: 0 8px 32px 0 var(--current-modal-shadow); /* Standard modal shadow */
+    backdrop-filter: none !important; /* Explicitly remove backdrop filter */
+    -webkit-backdrop-filter: none !important; /* Explicitly remove backdrop filter for Safari */
     border-radius: var(--current-glass-border-radius); /* Rounded corners for modal */
-    border: 1px solid var(--current-glass-border-color); /* Subtle border for glass effect */
+    border: 1px solid var(--current-card-border); /* Standard modal border */
     overflow: hidden; /* Main modal overflow hidden, content will scroll */
     /* display: flex; /* JS will control display via style.display */
     flex-direction: column; /* Stack header, body, footer vertically */
     /* Default state is hidden, animation classes will manage appearance */
     opacity: 0; /* Start fully transparent */
-    transform: translate(-50%, -50%) scale(0.5); /* Start scaled down */
+    transform: translate(-50%, -50%) scale(0.5) !important; /* Start scaled down, ensure transform applies */
     display: none; /* Initially hidden by JS */
 }
 
@@ -1022,7 +1027,7 @@ body.night-mode .product-info-column .price {
 
 .checkout-modal-header-ph1 h2 {
     margin: 0;
-    font-size: 1.4em; /* Slightly adjusted font size */
+    font-size: 2rem; /* Further Increased font size */
     color: var(--current-text); /* Ensure text color is themed */
 }
 
@@ -1061,10 +1066,6 @@ body.night-mode .product-info-column .price {
     transition: background-color 0.3s, transform 0.2s; /* Keep transitions */
 }
 
-/* Ensure agent widget is on top if its styles are here */
-/* .agent-widget { z-index: 10000 !important; } */
-/* It's better to set this in agent_widget.css or via its own JS if possible */
-
 #checkout-cancel-btn-ph1 {
     background-color: var(--current-secondary-button-bg);
     color: var(--current-secondary-button-text);
@@ -1087,9 +1088,6 @@ body.night-mode .product-info-column .price {
 }
 
 /* Item Selection Specific Styles */
-.checkout-item-selection-ph1 {
-    /* Container for all items */
-}
 
 .checkout-item-ph1 {
     display: flex;
@@ -1127,12 +1125,12 @@ body.night-mode .product-info-column .price {
 
 .checkout-item-details-ph1 .item-name-ph1 {
     font-weight: bold;
-    font-size: 1rem;
+    font-size: 1.3rem; /* Further Increased font size */
 }
 .checkout-item-details-ph1 .item-qty-ph1,
 .checkout-item-details-ph1 .item-price-ph1,
 .checkout-item-details-ph1 .item-total-ph1 {
-    font-size: 0.9rem;
+    font-size: 1.2rem; /* Further Increased font size */
     text-align: right; /* Align numerical data to the right */
 }
 .checkout-item-details-ph1 .item-qty-ph1::before { content: "Qty: "; opacity: 0.7; }
@@ -1249,9 +1247,7 @@ body.night-mode .product-info-column .price {
 }
 
 /* General improvements for modal footer buttons if needed */
-#checkout-modal-ph1 .modal-footer-ph1 button {
-    padding: 0.6rem 1.2rem; /* Consistent padding */
-}
+/* #checkout-modal-ph1 .modal-footer-ph1 button { Removed empty rule } */
 
 /* Phase 3: Payment Options Styling */
 .payment-method-options label,
@@ -1270,6 +1266,127 @@ body.night-mode .product-info-column .price {
 }
 
 #new-card-details input[type="text"] {
+/* Delivery/Shipping Window Modal Styles (#checkout-shipping-modal) */
+#checkout-shipping-modal {
+    display: flex; /* Added from .checkout-modal general styles if not already inherited effectively */
+    flex-direction: column; /* Match checkout-review-modal */
+    align-items: stretch;   /* Match checkout-review-modal */
+    
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050; /* Match checkout-review-modal */
+
+    max-width: 950px !important; /* Primary fix: Ensure dimension */
+    width: 90%; /* Responsive, respects max-width */
+    min-height: 450px !important; /* Primary fix: Ensure dimension */
+    max-height: 90vh; /* Match checkout-review-modal, prevent overflow */
+
+    background-color: var(--current-modal-bg, #2c3e50); /* Explicitly set solid background */
+    color: var(--current-text); /* Match checkout-review-modal */
+    border-radius: 12px; /* Match checkout-review-modal */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Match checkout-review-modal */
+    
+    backdrop-filter: none !important; /* Ensure no blur */
+    -webkit-backdrop-filter: none !important; /* Ensure no blur for Safari */
+    opacity: 1 !important; /* Ensure fully opaque */
+    overflow: hidden; /* Match checkout-review-modal, content will scroll */
+}
+
+#checkout-shipping-modal .checkout-modal-content {
+    padding: 25px; /* Consistent padding */
+    overflow-y: auto; /* Scroll for content */
+    flex-grow: 1; /* Ensure it fills the modal height if modal is flex column */
+    background-color: var(--current-modal-bg); /* Ensure solid background for content area itself */
+    display: flex;
+    flex-direction: column;
+}
+
+#checkout-shipping-modal h2 {
+    font-size: 2.2rem; /* Increased font size for title */
+    margin-bottom: 20px; /* Space below title */
+    text-align: center; /* Center title */
+}
+
+#checkout-shipping-modal .shipping-options-container {
+    margin-bottom: 20px; /* Space below options */
+    flex-grow: 1; /* Allow this section to take up space */
+}
+
+#checkout-shipping-modal .shipping-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px; /* Space between shipping options */
+    padding: 10px;
+    border: 1px solid var(--current-card-border);
+    border-radius: var(--current-glass-border-radius);
+    transition: background-color 0.2s;
+}
+#checkout-shipping-modal .shipping-option:hover {
+    background-color: var(--current-card-bg); /* Subtle hover effect */
+}
+
+
+#checkout-shipping-modal .shipping-option label {
+    font-size: 1.2rem; /* Increased font size for labels */
+    margin-left: 8px;
+    cursor: pointer;
+}
+#checkout-shipping-modal .shipping-option input[type="radio"] {
+    transform: scale(1.3); /* Make radio buttons slightly larger */
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+#checkout-shipping-modal #pickup-locations-list {
+    margin-bottom: 20px; /* Space below pickup locations if visible */
+    flex-grow: 1; /* Allow this section to take up space */
+}
+
+#checkout-shipping-modal #pickup-locations-list p {
+    font-size: 1.1rem; /* Increased font size for paragraph text */
+}
+#checkout-shipping-modal #pickup-locations-list .pickup-location { /* Assuming this class for individual locations */
+    font-size: 1.1rem;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--current-card-border);
+}
+#checkout-shipping-modal #pickup-locations-list .pickup-location:last-child {
+    border-bottom: none;
+}
+
+
+#checkout-shipping-modal .checkout-modal-actions {
+    margin-top: auto; /* Push actions to the bottom */
+    padding-top: 20px; /* Space above buttons */
+    border-top: 1px solid var(--current-card-border);
+}
+
+#checkout-shipping-modal .checkout-modal-actions button {
+    font-size: 1.1rem; /* Increased font size for buttons */
+    padding: 12px 20px; /* Slightly larger buttons */
+}
+
+/* Placeholder styling for potential future form elements in this modal */
+#checkout-shipping-modal input::placeholder {
+    font-size: 1rem;
+    color: var(--current-text);
+    opacity: 0.7;
+}
+
+#checkout-shipping-modal input[type="text"],
+#checkout-shipping-modal input[type="email"],
+#checkout-shipping-modal select {
+    font-size: 1rem; /* Font size for form fields */
+    padding: 10px;
+    border: 1px solid var(--current-input-border);
+    border-radius: var(--current-glass-border-radius);
+    width: 100%; /* Make form fields take full width of their container */
+    margin-bottom: 15px; /* Space below form fields */
+    background-color: var(--current-bg);
+    color: var(--current-text);
+}
     width: 100%;
     padding: 0.6rem;
     margin-top: 0.3rem;
@@ -1417,9 +1534,9 @@ body.night-mode {
 .order-confirmation-content strong {
     color: var(--accent-color); /* Or a specific highlight color */
 }
+/* END OF COMMENTED OUT PH1 CHECKOUT STYLES */
 
 /* Add to Cart Animation */
-/* .item-flying-to-cart class removed as it was redundant. .flying-item-animation is used. */
 /* New Left Sidebar Cart Styles */
 .cart-sidebar {
     position: fixed;
@@ -1562,8 +1679,8 @@ body header {
         transform: rotate(180deg) scale(1.1);
     }
     100% {
-        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #32cd32, 0 0 20px #32cd32; /* Green shades */
-        transform: rotate(360deg) scale(1);
+        transform: translate(-50%, -50%) scale(1) !important;
+        opacity: 1;
     }
 }
 
@@ -1600,11 +1717,6 @@ body header {
 }
 
 /* Agent Launcher Icon - it's a solid button, so glassmorphism doesn't directly apply, but ensure its border-radius is harmonious if needed */
-#agent-launcher-icon {
-    /* If a different border-radius is desired to match the new theme: */
-    /* border-radius: var(--current-glass-border-radius); */ 
-    /* However, 50% for a circle is usually fine. */
-}
 
 /* Input fields general styling - increasing border-radius */
 input[type="text"],
@@ -1757,7 +1869,625 @@ input[type="reset"] {
         width: 50px;
         height: 50px;
         font-size: 1.5em;
-        bottom: 15px;
-        right: 15px;
+    bottom: 15px;
+    right: 15px;
     }
+}
+
+/* Checkout Review Modal (Phase 1 - Initial) */
+.checkout-modal { /* General class for all checkout modals */
+    display: none; /* Hidden by default, JS controls visibility */
+    position: fixed;
+    z-index: 1001; /* Above most content, but potentially below other system modals if any */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if content overflows */
+    background-color: rgba(0,0,0,0.5); /* Dimmed background */
+    align-items: center; /* For centering content if using flex */
+    justify-content: center; /* For centering content if using flex */
+}
+
+.checkout-modal-content {
+    background-color: var(--current-modal-bg) !important; /* Ensures solid background */
+    backdrop-filter: none !important; /* Explicitly remove glass effect */
+    -webkit-backdrop-filter: none !important; /* Explicitly remove glass effect for Safari */
+    color: var(--current-text);
+    margin: auto; /* Center in viewport */
+    padding: 35px; /* Slightly Increased padding */
+    border: 1px solid var(--current-card-border);
+    border-radius: var(--current-glass-border-radius);
+    width: auto; /* Allow it to use max-width */
+    max-width: 1350px; /* Further Increased max-width for more rectangular shape */
+    min-height: 700px; /* Further Increased min-height for more rectangular shape */
+    box-shadow: 0 5px 20px var(--current-modal-shadow);
+    position: relative;
+    animation: fadeInModal 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.checkout-modal-content h2 { /* Style for the modal title */
+    font-size: 2.8rem; /* Further Increased title font size */
+    margin-bottom: 2.5rem; /* Add more space below the title */
+    text-align: center;
+}
+
+.checkout-modal-close-btn {
+    color: var(--current-text);
+    float: right; /* Keep it to the right */
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    line-height: 1;
+}
+
+.checkout-modal-close-btn:hover,
+.checkout-modal-close-btn:focus {
+    opacity: 0.7;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#checkout-modal-items-container {
+    flex-grow: 1; /* Allow this area to take available space */
+    max-height: none; /* Remove fixed max-height to use flex-grow */
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    border-top: 1px solid var(--current-card-border);
+    border-bottom: 1px solid var(--current-card-border);
+    padding: 10px 5px; /* Add some padding */
+}
+
+/* Styling for individual items within the checkout modal */
+.checkout-modal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0; /* Further Increased padding */
+    border-bottom: 1px dashed var(--current-card-border);
+    font-size: 1.8rem; /* Further Increased font size for items */
+}
+.checkout-modal-item:last-child {
+    border-bottom: none;
+}
+.checkout-modal-item-name {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+.checkout-modal-item-qty {
+    min-width: 50px;
+    text-align: right;
+    margin-right: 10px;
+}
+.checkout-modal-item-price {
+    min-width: 70px;
+    text-align: right;
+    font-weight: 500;
+}
+
+
+.checkout-modal-summary {
+    margin-top: 1rem;
+    text-align: right;
+}
+.checkout-modal-summary p {
+    font-size: 2.1rem; /* Further Increased font size for summary */
+    font-weight: bold;
+    margin-bottom: 2.5rem; /* Further Increased margin */
+}
+
+.checkout-modal-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px; /* Space between buttons */
+}
+
+.checkout-modal-actions button {
+    padding: 0.7rem 1.3rem;
+    border: none;
+    border-radius: var(--current-glass-border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    font-weight: bold;
+    font-size: 1.8rem; /* Further Increased font size for buttons */
+}
+.checkout-modal-actions button:hover {
+    transform: translateY(-1px);
+}
+
+#checkout-modal-modify-btn {
+    background-color: var(--current-secondary-button-bg);
+    color: var(--current-secondary-button-text);
+}
+#checkout-modal-modify-btn:hover {
+    opacity: 0.85;
+}
+
+#checkout-modal-proceed-btn {
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+}
+#checkout-modal-proceed-btn:hover {
+    opacity: 0.85;
+}
+
+/* === Checkout Review Modal Styles - New Implementation === */
+
+/* div#checkout-review-modal (The Parent/Wrapper - This is the main modal rectangle) */
+#checkout-review-modal {
+    /* display: flex; is already inline, but we define its behavior */
+    flex-direction: column; /* Stack children vertically */
+    align-items: stretch;   /* Stretch children to fill width */
+    
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050;
+
+    max-width: 800px; /* Adjusted */
+    width: 90%; /* Responsive for smaller screens, respects max-width */
+    min-height: 500px; /* Adjusted */
+    max-height: 90vh; /* Prevent overflow on short screens */
+
+    background-color: var(--current-modal-bg, #2c3e50); /* Solid background - using a dark grey as suggested, with fallback */
+    color: var(--current-text);
+    border-radius: 10px; /* Adjusted */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    
+    /* Remove any potential inherited transparency/blur from previous attempts */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1 !important; /* Ensure it's fully opaque */
+    overflow: hidden; /* The .checkout-modal-content will handle internal scroll */
+}
+
+/* div.checkout-modal-content (The Child/Content Area) */
+#checkout-review-modal .checkout-modal-content { /* Specificity */
+    width: 100%;
+    height: 100%; /* Fill the parent #checkout-review-modal */
+    padding: 25px 35px; /* Adjusted padding */
+    
+    background-color: var(--current-modal-bg, #2c3e50); /* Same solid background as parent */
+    color: var(--current-text); /* Ensure text color is consistent */
+
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Allows content within this div to scroll if it overflows */
+    position: relative; /* For absolute positioning of close button if it's inside this div */
+}
+
+/* Styling for elements within .checkout-modal-content */
+.checkout-modal-content h2 {
+    font-size: 1.8rem; /* Adjusted */
+    margin-bottom: 25px; /* Adjusted */
+    text-align: center;
+    font-weight: 600;
+    color: var(--current-text); /* Ensure heading color */
+    padding-top: 10px; /* Some space from the top edge of content area */
+    margin-top: 0;
+}
+
+#checkout-modal-items-container {
+    font-size: 1rem; /* Adjusted */
+    line-height: 1.5; /* Adjusted */
+    margin-bottom: 20px;
+    flex-grow: 1; /* Allows this container to take up available vertical space */
+    /* overflow-y: auto; -- Moved to .checkout-modal-content to handle overall scroll */
+    padding-right: 5px; /* Small padding if scrollbar appears */
+}
+
+#checkout-modal-items-container .cart-item { /* Example styling for items */
+    padding: 12px 0; /* Adjusted */
+    border-bottom: 1px solid var(--current-card-border, #444); /* Darker border for dark modal */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#checkout-modal-items-container .cart-item:last-child {
+    border-bottom: none;
+}
+/* Ensure text inside items is readable */
+#checkout-modal-items-container .cart-item-details p,
+#checkout-modal-items-container .cart-item-details h4 {
+    color: var(--current-text);
+}
+
+
+.checkout-modal-summary {
+    font-size: 1.1rem; /* Adjusted */
+    margin-top: auto; /* Pushes summary to the bottom if items don't fill space */
+    padding-top: 20px; /* Adjusted */
+    border-top: 1px solid var(--current-card-border, #444); /* Darker border */
+    font-weight: 500;
+    color: var(--current-text); /* Ensure summary text color */
+}
+.checkout-modal-summary p {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+.checkout-modal-summary p:last-child {
+    margin-bottom: 0;
+}
+
+.checkout-modal-actions {
+    margin-top: 30px; /* Adjusted */
+    padding-top: 15px;
+    /* border-top: 1px solid var(--current-card-border, #444); */ /* Optional: line above actions */
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px; /* Adjusted */
+}
+
+.checkout-modal-actions button {
+    font-size: 0.95rem; /* Adjusted */
+    padding: 12px 22px; /* Adjusted */
+    border-radius: 6px; /* Adjusted */
+    cursor: pointer;
+    border: none;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.checkout-modal-actions button.primary { /* Assuming a class for primary button */
+    background-color: var(--current-button-bg, #007AFF);
+    color: var(--current-button-text, #fff);
+}
+.checkout-modal-actions button.primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.checkout-modal-actions button.secondary { /* Assuming a class for secondary button */
+    background-color: var(--current-secondary-button-bg, #6c757d);
+    color: var(--current-secondary-button-text, #fff);
+}
+.checkout-modal-actions button.secondary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+
+.checkout-modal-close-btn { /* Assuming this is inside .checkout-modal-content */
+    position: absolute;
+    top: 20px; /* Adjusted */
+    right: 20px; /* Adjusted */
+    font-size: 1.8rem; /* Adjusted */
+    font-weight: bold;
+    color: var(--current-text);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+.checkout-modal-close-btn:hover {
+    opacity: 0.6;
+}
+
+/*
+  If #checkout-review-modal itself is meant to have a backdrop effect 
+  (e.g. page dimming), that would typically be handled by a separate 
+  ::before pseudo-element or another div.
+  The current instructions imply #checkout-review-modal *is* the modal box.
+  If a page overlay is needed, the HTML structure might need adjustment.
+  For now, focusing on styling the provided HTML elements as per instructions.
+*/
+
+/* 
+  Ensure .popping-in class (if it controls visibility/animation) works with these styles.
+  Typically, it might toggle opacity and transform for the modal itself (#checkout-review-modal).
+  Example:
+  #checkout-review-modal {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.95);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  #checkout-review-modal.popping-in.show { // Assuming 'show' class is added by JS
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+  }
+*/
+/* === End Checkout Review Modal Styles === */
+
+/* Shipping Modal Styles */
+/* #checkout-shipping-modal inherits .checkout-modal styles for base */
+/* #checkout-shipping-modal .checkout-modal-content inherits .checkout-modal-content styles */
+
+.shipping-options-container {
+    margin-bottom: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--current-card-border);
+}
+
+.shipping-option {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--current-glass-border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    border: 1px solid transparent; /* For selection indication */
+}
+
+.shipping-option:hover {
+    background-color: var(--current-checkout-step-inactive-bg); /* Subtle hover */
+}
+
+.shipping-option input[type="radio"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--current-button-bg);
+}
+
+.shipping-option label {
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-grow: 1;
+}
+
+.shipping-option.selected {
+    background-color: var(--current-checkout-step-active-bg);
+    color: var(--current-checkout-step-active-text);
+    border-color: var(--current-button-bg);
+}
+
+.shipping-option.selected label,
+.shipping-option.selected input[type="radio"] {
+    color: var(--current-checkout-step-active-text); /* Ensure label text color changes */
+}
+
+
+.pickup-locations-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--current-card-border);
+    border-radius: var(--current-glass-border-radius);
+    background-color: var(--current-bg-slightly-dimmed, var(--current-bg));
+}
+
+.pickup-locations-container h4 {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    color: var(--current-text);
+}
+
+.pickup-location-option {
+    padding: 0.8rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--current-card-border);
+    border-radius: var(--current-glass-border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.pickup-location-option:hover {
+    background-color: var(--current-checkout-step-inactive-bg);
+    border-color: var(--current-button-bg);
+}
+
+.pickup-location-option.selected {
+    background-color: var(--current-checkout-step-active-bg);
+    color: var(--current-checkout-step-active-text);
+    border-color: var(--current-button-bg);
+    font-weight: bold;
+}
+
+.pickup-location-option .location-name {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.pickup-location-option .location-address {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Ensure action buttons in shipping modal are styled like review modal */
+/* #checkout-shipping-modal .checkout-modal-actions button { Removed empty rule - inherits from .checkout-modal-actions button } */
+
+/* Styles for checkout-shipping-modal */
+#checkout-shipping-modal {
+    max-width: 600px !important; /* Adjusted */
+    min-height: 470px !important; /* Adjusted */
+    max-height: 470px !important; /* Adjusted */
+    width: 90% !important;
+    background-color: var(--current-modal-bg, #2c3e50) !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 1050 !important;
+    flex-direction: column !important;
+    border-radius: 8px !important; /* Added */
+}
+
+#checkout-shipping-modal .checkout-modal-content {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 25px !important; /* Adjusted padding */
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    background-color: transparent !important;
+}
+
+#checkout-shipping-modal .checkout-modal-content h2 {
+    font-size: 1.75rem !important; /* Adjusted */
+    margin-top: 0 !important;
+    margin-bottom: 22px !important; /* Adjusted */
+}
+
+#checkout-shipping-modal .checkout-modal-content .shipping-option label {
+    font-size: 1.05rem !important; /* Adjusted */
+}
+
+#checkout-shipping-modal .checkout-modal-content #pickup-locations-list p {
+    font-size: 0.9rem !important; /* Adjusted */
+}
+
+#checkout-shipping-modal .checkout-modal-content .checkout-modal-actions button {
+    font-size: 0.9rem !important; /* Adjusted */
+    padding: 9px 18px !important; /* Adjusted */
+    border-radius: 6px !important; /* Adjusted */
+}
+
+/* Payment Modal Styles */
+#checkout-payment-modal {
+    /* Inherits from .checkout-modal for base positioning and overlay */
+    max-width: 650px !important; /* Adjusted for payment content */
+    min-height: 500px !important; /* Ensure sufficient height */
+    max-height: 90vh;
+    background-color: var(--current-modal-bg) !important; /* Solid background */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1 !important;
+    border-radius: 10px !important; /* Consistent rounded corners */
+}
+
+#checkout-payment-modal .checkout-modal-content {
+    padding: 30px; /* Generous padding */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure content area fills modal */
+}
+
+#checkout-payment-modal h2 {
+    font-size: 1.8rem; /* Clear title */
+    margin-bottom: 25px;
+    text-align: center;
+    color: var(--current-text);
+}
+
+.payment-options-container {
+    margin-bottom: 20px;
+    flex-grow: 1; /* Allow options to take space */
+}
+
+.payment-option {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid var(--current-card-border);
+    border-radius: var(--current-glass-border-radius); /* Consistent border radius */
+    background-color: var(--current-bg-slightly-dimmed, var(--current-bg)); /* Subtle background for options */
+}
+
+.payment-option input[type="radio"] {
+    margin-right: 10px;
+    transform: scale(1.2); /* Slightly larger radio buttons */
+    accent-color: var(--current-button-bg);
+}
+
+.payment-option label {
+    font-size: 1.1rem; /* Readable label size */
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--current-text);
+}
+
+.card-details-form {
+    margin-top: 15px;
+    padding-left: 25px; /* Indent card details */
+}
+
+#saved-card-details p {
+    font-size: 1rem;
+    color: var(--current-text);
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+#new-card-form .form-group {
+    margin-bottom: 15px;
+}
+
+#new-card-form .form-group label {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--current-text);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+#new-card-form .form-group input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid var(--current-input-border);
+    border-radius: var(--current-glass-border-radius);
+    background-color: var(--current-bg);
+    color: var(--current-text);
+}
+
+#new-card-form .form-group input[type="text"]::placeholder {
+    color: var(--current-text);
+    opacity: 0.7;
+}
+
+#new-card-form .form-group input[type="text"]:focus {
+    border-color: var(--current-button-bg);
+    box-shadow: 0 0 0 2px var(--current-button-bg-transparent);
+    outline: none;
+}
+
+#save-card-btn {
+    background-color: var(--current-secondary-button-bg);
+    color: var(--current-secondary-button-text);
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    border-radius: var(--current-glass-border-radius);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+}
+
+#save-card-btn:hover {
+    opacity: 0.9;
+}
+
+#checkout-payment-modal .checkout-modal-actions {
+    margin-top: auto; /* Push actions to the bottom */
+    padding-top: 20px;
+    border-top: 1px solid var(--current-card-border);
+    display: flex;
+    justify-content: space-between; /* Align buttons */
+}
+
+#checkout-payment-modal .checkout-modal-actions button {
+    font-size: 1rem; /* Readable button text */
+    padding: 12px 20px; /* Comfortable button size */
+    border-radius: var(--current-glass-border-radius);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+#payment-back-btn {
+    background-color: var(--current-secondary-button-bg);
+    color: var(--current-secondary-button-text);
+}
+#payment-back-btn:hover {
+    opacity: 0.9;
+}
+
+#payment-confirm-btn {
+    background-color: var(--current-button-bg);
+    color: var(--current-button-text);
+}
+#payment-confirm-btn:hover {
+    opacity: 0.9;
 }

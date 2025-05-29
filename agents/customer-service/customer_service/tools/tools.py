@@ -17,6 +17,7 @@
 import logging
 import uuid
 from datetime import datetime, timedelta
+from typing import Optional # Added import for Optional
 import requests # Added for making HTTP requests
 import json # Added for parsing JSON responses
 
@@ -33,101 +34,101 @@ except ImportError:
     BACKEND_API_BASE_URL = "http://127.0.0.1:5000/api"
 
 
-def send_call_companion_link(phone_number: str) -> str:
-    """
-    Sends a link to the user's phone number to start a video session.
+# def send_call_companion_link(phone_number: str) -> str:
+#     """
+#     Sends a link to the user's phone number to start a video session.
 
-    Args:
-        phone_number (str): The phone number to send the link to.
+#     Args:
+#         phone_number (str): The phone number to send the link to.
 
-    Returns:
-        dict: A dictionary with the status and message.
+#     Returns:
+#         dict: A dictionary with the status and message.
 
-    Example:
-        >>> send_call_companion_link(phone_number='+12065550123')
-        {'status': 'success', 'message': 'Link sent to +12065550123'}
-    """
+#     Example:
+#         >>> send_call_companion_link(phone_number='+12065550123')
+#         {'status': 'success', 'message': 'Link sent to +12065550123'}
+#     """
 
-    logger.info("Sending call companion link to %s", phone_number)
+#     logger.info("Sending call companion link to %s", phone_number)
 
-    return {"status": "success", "message": f"Link sent to {phone_number}"}
-
-
-def approve_discount(discount_type: str, value: float, reason: str) -> str:
-    """
-    Approve the flat rate or percentage discount requested by the user.
-
-    Args:
-        discount_type (str): The type of discount, either "percentage" or "flat".
-        value (float): The value of the discount.
-        reason (str): The reason for the discount.
-
-    Returns:
-        str: A JSON string indicating the status of the approval.
-
-    Example:
-        >>> approve_discount(type='percentage', value=10.0, reason='Customer loyalty')
-        '{"status": "ok"}'
-    """
-    logger.info(
-        "Approving a %s discount of %s because %s", discount_type, value, reason
-    )
-
-    logger.info("INSIDE TOOL CALL")
-    return '{"status": "ok"}'
+#     return {"status": "success", "message": f"Link sent to {phone_number}"}
 
 
-def sync_ask_for_approval(discount_type: str, value: float, reason: str) -> str:
-    """
-    Asks the manager for approval for a discount.
+# def approve_discount(discount_type: str, value: float, reason: str) -> str:
+#     """
+#     Approve the flat rate or percentage discount requested by the user.
 
-    Args:
-        discount_type (str): The type of discount, either "percentage" or "flat".
-        value (float): The value of the discount.
-        reason (str): The reason for the discount.
+#     Args:
+#         discount_type (str): The type of discount, either "percentage" or "flat".
+#         value (float): The value of the discount.
+#         reason (str): The reason for the discount.
 
-    Returns:
-        str: A JSON string indicating the status of the approval.
+#     Returns:
+#         str: A JSON string indicating the status of the approval.
 
-    Example:
-        >>> sync_ask_for_approval(type='percentage', value=15, reason='Customer loyalty')
-        '{"status": "approved"}'
-    """
-    logger.info(
-        "Asking for approval for a %s discount of %s because %s",
-        discount_type,
-        value,
-        reason,
-    )
-    return '{"status": "approved"}'
+#     Example:
+#         >>> approve_discount(type='percentage', value=10.0, reason='Customer loyalty')
+#         '{"status": "ok"}'
+#     """
+#     logger.info(
+#         "Approving a %s discount of %s because %s", discount_type, value, reason
+#     )
+
+#     logger.info("INSIDE TOOL CALL")
+#     return '{"status": "ok"}'
 
 
-def update_salesforce_crm(customer_id: str, details: dict) -> dict:
-    """
-    Updates the Salesforce CRM with customer details.
+# def sync_ask_for_approval(discount_type: str, value: float, reason: str) -> str:
+#     """
+#     Asks the manager for approval for a discount.
 
-    Args:
-        customer_id (str): The ID of the customer.
-        details (str): A dictionary of details to update in Salesforce.
+#     Args:
+#         discount_type (str): The type of discount, either "percentage" or "flat".
+#         value (float): The value of the discount.
+#         reason (str): The reason for the discount.
 
-    Returns:
-        dict: A dictionary with the status and message.
+#     Returns:
+#         str: A JSON string indicating the status of the approval.
 
-    Example:
-        >>> update_salesforce_crm(customer_id='123', details={
-            'appointment_date': '2024-07-25',
-            'appointment_time': '9-12',
-            'services': 'Planting',
-            'discount': '15% off planting',
-            'qr_code': '10% off next in-store purchase'})
-        {'status': 'success', 'message': 'Salesforce record updated.'}
-    """
-    logger.info(
-        "Updating Salesforce CRM for customer ID %s with details: %s",
-        customer_id,
-        details,
-    )
-    return {"status": "success", "message": "Salesforce record updated."}
+#     Example:
+#         >>> sync_ask_for_approval(type='percentage', value=15, reason='Customer loyalty')
+#         '{"status": "approved"}'
+#     """
+#     logger.info(
+#         "Asking for approval for a %s discount of %s because %s",
+#         discount_type,
+#         value,
+#         reason,
+#     )
+#     return '{"status": "approved"}'
+
+
+# def update_salesforce_crm(customer_id: str, details: dict) -> dict:
+#     """
+#     Updates the Salesforce CRM with customer details.
+
+#     Args:
+#         customer_id (str): The ID of the customer.
+#         details (str): A dictionary of details to update in Salesforce.
+
+#     Returns:
+#         dict: A dictionary with the status and message.
+
+#     Example:
+#         >>> update_salesforce_crm(customer_id='123', details={
+#             'appointment_date': '2024-07-25',
+#             'appointment_time': '9-12',
+#             'services': 'Planting',
+#             'discount': '15% off planting',
+#             'qr_code': '10% off next in-store purchase'})
+#         {'status': 'success', 'message': 'Salesforce record updated.'}
+#     """
+#     logger.info(
+#         "Updating Salesforce CRM for customer ID %s with details: %s",
+#         customer_id,
+#         details,
+#     )
+#     return {"status": "success", "message": "Salesforce record updated."}
 
 
 def access_cart_information(customer_id: str) -> dict:
@@ -554,6 +555,111 @@ def generate_qr_code(
         "qr_code_data": "MOCK_QR_CODE_DATA",  # Replace with actual QR code
         "expiration_date": expiration_date,
     }
+
+
+def initiate_checkout_ui(customer_id: str) -> dict:
+    """
+    Fetches cart information and signals the intent to show the checkout UI.
+
+    Args:
+        customer_id (str): The ID of the customer.
+
+    Returns:
+        dict: A dictionary with the action 'show_checkout_ui' and the cart_data.
+              Example: {'action': 'show_checkout_ui', 'cart_data': {'items': [...], 'subtotal': ...}}
+    """
+    logger.info(f"Initiating checkout UI for customer ID: {customer_id}")
+
+    cart_data = access_cart_information(customer_id=customer_id)
+    
+    action_payload = {"action": "show_checkout_ui", "cart_data": cart_data}
+    
+    logger.info(f"Returning action payload for initiate_checkout_ui: {action_payload}")
+    return action_payload
+
+def initiate_shipping_ui(customer_id: str) -> dict:
+    """
+    Signals the intent to display the shipping UI options.
+
+    Args:
+        customer_id (str): The ID of the customer. (Currently unused by this tool but kept for consistency)
+
+    Returns:
+        dict: A dictionary with the action 'show_shipping_ui_requested'.
+              Example: {'action': 'show_shipping_ui_requested'}
+    """
+    logger.info(f"Initiating shipping UI for customer ID: {customer_id}")
+    action_payload = {"action": "show_shipping_ui_requested"}
+    logger.info(f"Returning action payload for initiate_shipping_ui: {action_payload}")
+    return action_payload
+
+def initiate_payment_ui(customer_id: str) -> dict:
+    """
+    Signals the intent to display the payment UI options.
+
+    Args:
+        customer_id (str): The ID of the customer. (Currently unused by this tool but kept for consistency)
+
+    Returns:
+        dict: A dictionary with the action 'show_payment_ui_requested'.
+              Example: {'action': 'show_payment_ui_requested'}
+    """
+    logger.info(f"Initiating payment UI for customer ID: {customer_id}")
+    action_payload = {"action": "show_payment_ui_requested"}
+    logger.info(f"Returning action payload for initiate_payment_ui: {action_payload}")
+    return action_payload
+
+def agent_processes_shipping_choice(customer_id: str, user_choice_type: str, user_selection_details: Optional[dict] = None) -> dict:
+    """
+    Processes the user's shipping choice and determines the UI confirmation and agent's verbal response.
+
+    Args:
+        customer_id (str): The ID of the customer.
+        user_choice_type (str): The type of choice made by the user or UI. 
+                                Expected values: "selected_home_delivery", "selected_pickup_initiated", 
+                                "selected_pickup_address", "navigated_back_to_cart_review".
+        user_selection_details (Optional[dict]): Additional details, e.g., for "selected_pickup_address",
+                                                 it might contain {'text': 'Address Name', 'index': 0}.
+
+    Returns:
+        dict: A dictionary containing an 'action' for UI confirmation and a 'speak' field for the agent's response.
+              Example: {'action': 'confirm_ui_home_delivery', 'speak': 'Okay, Home Delivery selected.'}
+    """
+    logger.info(f"Agent processing shipping choice for customer {customer_id}. Choice type: {user_choice_type}, Details: {user_selection_details}")
+
+    response_payload = {"action": "no_ui_change_needed", "speak": "An unexpected shipping interaction occurred."} # Default generic response
+
+    if user_choice_type == "selected_home_delivery":
+        response_payload = {
+            "action": "confirm_ui_home_delivery",
+            "speak": "Okay, Home Delivery has been selected. Ready for the next step, payment?"
+        }
+    elif user_choice_type == "selected_pickup_initiated":
+        response_payload = {
+            "action": "confirm_ui_pickup_initiated", # This tells UI to show pickup locations if not already visible
+            "speak": "Alright, you'd like a pickup point. Please select one of the displayed options."
+        }
+    elif user_choice_type == "selected_pickup_address":
+        if user_selection_details and "text" in user_selection_details and "index" in user_selection_details:
+            response_payload = {
+                "action": "confirm_ui_pickup_address",
+                "address_index": user_selection_details["index"],
+                "speak": f"Great, pickup at {user_selection_details['text']} is confirmed. Shall we proceed to payment?"
+            }
+        else:
+            logger.warning(f"Missing details for 'selected_pickup_address': {user_selection_details}")
+            response_payload["speak"] = "It seems there was an issue selecting the pickup address. Could you please try again?"
+    elif user_choice_type == "navigated_back_to_cart_review":
+        response_payload = {
+            "action": "no_ui_change_needed", # Or a specific action if UI needs to react to going back
+            "speak": "Okay, we are back to your cart review. How can I help?"
+        }
+    else:
+        logger.warning(f"Unhandled user_choice_type in agent_processes_shipping_choice: {user_choice_type}")
+
+    logger.info(f"Agent_processes_shipping_choice returning: {response_payload}")
+    return response_payload
+
 def set_website_theme(theme: str) -> dict:
     """
     Sets the website theme to 'night' or 'day'.
@@ -584,6 +690,64 @@ def set_website_theme(theme: str) -> dict:
     return action_result
 
 
+def submit_order_and_clear_cart(customer_id: str, cart_items: list[dict], shipping_details: dict, total_amount: float) -> dict:
+    """
+    Submits the order to the backend, which includes clearing the cart.
+
+    Args:
+        customer_id (str): The ID of the customer.
+        cart_items (list[dict]): List of items in the cart (e.g., from access_cart_information).
+        shipping_details (dict): Shipping information collected.
+        total_amount (float): The final total amount for the order.
+
+    Returns:
+        dict: A dictionary with the status of the order submission.
+              Example: {'status': 'success', 'message': 'Order submitted...', 'order_id': 'SIM_123', 'action': 'refresh_cart_and_show_confirmation'}
+    """
+    logger.info(f"Submitting order for customer ID: {customer_id}")
+    api_url = f"{BACKEND_API_BASE_URL}/checkout/place_order"
+    
+    payload = {
+        "customer_id": customer_id,
+        "items": cart_items,
+        "shipping_details": shipping_details,
+        "total_amount": total_amount
+    }
+    
+    logger.info(f"Order submission payload: {json.dumps(payload, indent=2)}")
+
+    try:
+        response = requests.post(api_url, json=payload, timeout=10)
+        response.raise_for_status()
+        order_status = response.json() # Expected: {"status": "success", "message": "...", "order_id": "..."}
+        
+        if order_status.get("status") == "success":
+            logger.info(f"Order successfully submitted for customer {customer_id}: {order_status}")
+            return {
+                "status": "success",
+                "message": order_status.get("message", "Order submitted and cart cleared."),
+                "order_id": order_status.get("order_id"),
+                "action": "refresh_cart_and_show_confirmation" # Action for UI
+            }
+        else:
+            logger.error(f"Order submission reported failure by API for customer {customer_id}: {order_status}")
+            return {
+                "status": "error",
+                "message": order_status.get("message", "Order submission failed at API level."),
+                "details": order_status
+            }
+
+    except requests.exceptions.HTTPError as http_err:
+        logger.error(f"HTTP error occurred while submitting order for {customer_id}: {http_err} - Response: {response.text if 'response' in locals() else 'N/A'}")
+        return {"status": "error", "message": f"Failed to submit order due to HTTP error: {response.status_code if 'response' in locals() else 'Unknown'}"}
+    except requests.exceptions.RequestException as req_err:
+        logger.error(f"Request exception occurred while submitting order for {customer_id}: {req_err}")
+        return {"status": "error", "message": "Failed to connect to order submission service."}
+    except json.JSONDecodeError as json_err:
+        logger.error(f"Failed to decode JSON response from order submission API for {customer_id}: {json_err} - Response: {response.text if 'response' in locals() else 'N/A'}")
+        return {"status": "error", "message": "Invalid response from order submission service."}
+
+
 # Deprecated: Replaced by granular UI tools like display_checkout_item_selection_ui, etc.
 # def initiate_checkout_ui() -> dict:
 #     """
@@ -600,118 +764,3 @@ def set_website_theme(theme: str) -> dict:
 #     logger.info(f"Returning action payload for initiate_checkout_ui: {action_payload}")
 #
 #     return action_payload
-
-
-def display_checkout_item_selection_ui(cart_items: list) -> dict:
-    """
-    Displays the item selection UI for checkout.
-
-    Args:
-        cart_items (list): A list of cart items (dictionaries).
-
-    Returns:
-        dict: A dictionary to display the item selection UI.
-    """
-    logger.info(f"Displaying checkout item selection UI with items: {cart_items}")
-    return {
-        "action": "display_ui",
-        "ui_element": "checkout_item_selection",
-        "payload": {"items": cart_items},
-    }
-
-
-def display_shipping_options_ui() -> dict:
-    """
-    Displays the shipping options UI for checkout.
-
-    Returns:
-        dict: A dictionary to display the shipping options UI.
-    """
-    logger.info("Displaying shipping options UI")
-    return {
-        "action": "display_ui",
-        "ui_element": "shipping_options",
-        "payload": {},
-    }
-
-
-def display_pickup_locations_ui(static_locations: list) -> dict:
-    """
-    Displays the pickup locations UI for checkout.
-
-    Args:
-        static_locations (list): A list of static pickup location strings.
-
-    Returns:
-        dict: A dictionary to display the pickup locations UI.
-    """
-    logger.info(f"Displaying pickup locations UI with locations: {static_locations}")
-    return {
-        "action": "display_ui",
-        "ui_element": "pickup_locations",
-        "payload": {"locations": static_locations},
-    }
-
-
-def display_payment_methods_ui(customer_id: str) -> dict:
-    """Displays a UI for selecting payment methods, including mocked saved methods.
-
-    Args:
-        customer_id (str): The ID of the customer. Though not used for API calls
-                           in this mocked version, it's included for future integration.
-
-    Returns:
-        A dictionary representing the UI elements for payment method selection.
-    """
-    logger.info(f"Displaying payment methods UI for customer_id: {customer_id}.")
-
-    mock_saved_methods = [
-        {"type": "saved", "display_name": "Visa ending in 1234", "id": "mock_saved_card_1"},
-        {"type": "saved", "display_name": "Mastercard ending in 5678", "id": "mock_saved_card_2"},
-    ]
-
-    generic_methods = [
-        {"type": "new", "display_name": "Add New Credit/Debit Card"},
-        {"type": "other", "display_name": "PayPal"},
-        {"type": "other", "display_name": "Google Pay"}
-    ]
-
-    all_methods = mock_saved_methods + generic_methods
-    
-    # The original tool returned an "action" and "ui_element",
-    # keeping a similar structure for the payload.
-    # The main "ui_type" for the agent/UI to interpret will be "payment_selection"
-    # as per the architect's plan for the payload structure.
-    payload_to_agent = {
-        "ui_type": "payment_selection", # Key for UI interpretation
-        "methods": all_methods,
-    }
-
-    # The tool itself, when called by the agent, might still be expected to return
-    # the "action": "display_ui" structure if other similar UI tools do.
-    # We will embed the architect's planned payload within this.
-    tool_return_value = {
-        "action": "display_ui",
-        "ui_element": "payment_methods", # Matches original structure
-        "payload": payload_to_agent
-    }
-    logger.info(f"Payment methods tool_return_value for customer_id {customer_id}: {tool_return_value}")
-    return tool_return_value
-
-
-def display_order_confirmation_ui(order_details: dict) -> dict:
-    """
-    Displays the order confirmation UI.
-
-    Args:
-        order_details (dict): A dictionary of order details.
-
-    Returns:
-        dict: A dictionary to display the order confirmation UI.
-    """
-    logger.info(f"Displaying order confirmation UI with details: {order_details}")
-    return {
-        "action": "display_ui",
-        "ui_element": "order_confirmation",
-        "payload": {"details": order_details},
-    }

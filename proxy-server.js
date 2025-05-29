@@ -165,6 +165,13 @@ const fastApiWsProxy = createProxyMiddleware({
     },
     onOpen: (proxySocket) => {
         console.log('[PROXY_DEBUG] [/ws_stream] WebSocket connection opened to target (FastAPI)');
+        proxySocket.on('data', (data) => { // Data from FastAPI (Python Backend)
+            // DIAGNOSTIC LOG: Log chunks from Python backend to proxy
+            console.log('[PROXY_DEBUG] [/ws_stream] CHUNK FROM FastAPI (Python Backend) TO PROXY:', data.toString('utf-8'));
+        });
+        proxySocket.on('error', (err) => {
+            console.error('[PROXY_DEBUG] [/ws_stream] Error on proxySocket (connection to FastAPI target):', err);
+        });
     },
     onClose: (res, socket, head) => {
         console.log('[PROXY_DEBUG] [/ws_stream] WebSocket connection closed. Client socket readyState:', socket.readyState);
